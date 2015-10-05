@@ -1,5 +1,7 @@
 \documentclass{article}
 
+\usepackage[margin=0.8in]{geometry}
+
 \title{Social Feedback for Robotic Collaboration}
 \author{Emily Wu, Brown University}
 \begin{document}
@@ -36,13 +38,80 @@ $R$ is the reward function, which takes as input a state and an action and outpu
 
 $\Omega$ describes the set of all observations. Observations here are a tuple of $(l,g)$, where $l$ is the human's language as interpreted by speech recognition, and $g$ is the human's gesture, as determined through the position of the human's shoulder and wrist compared to the location of objects on the table. 
 
-$O$ is the observation function, which gives the probability $p(o|s, a)$---the probability of witnessing a certain observation given the state that it occured in and the action that triggered it. We consider language and gesture to be conditionally independent given the true state, and can therefore consider them separately. Language we interpret (incrementally) according to a unigram model with probabilities specified by the object's vocabulary. The probability of a gesture given the object is indicated is intepreted to a normal distribution centered at the object. 
+$O$ is the observation function, which gives the probability $p(o|s, a)$---the probability of witnessing a certain observation given the state that it occured in and the action that triggered it. We consider language and gesture to be conditionally independent given the true state, and can therefore consider them separately. Language we interpret (incrementally) according to a unigram model with probabilities specified by the object's vocabulary. The probability of a gesture given the object is indicated is intepreted to a normal distribution centered at the object. Our observation function also provides a special case for when the human responds ``yes'' or ``no''. This is interpreted to be an answer to the last question the robot asked (which is stored as an additional state variable for bookkeeping purposes), \texttt{ASK(x)}. The observation of ``yes'' is more likely for objects that have property \texttt{x} and less likely for objects that do not. For ``no'' it is the opposite. In addition, we model the probability of any communication from the participant to be higher if the robot asks a question the previous turn. 
+
+\subsection{POMDP Solver: Belief Sparse Sampling}
+
+We formulate this POMDP using the Brown UMBC Reinforcement Learning And Planning (BURLAP) Library \textbf{citation} and use Belief Sparse Sampling \textbf{citation} to solve the POMDP. However, Belief Sparse Sampling too slowly to be used in user trials, so many optimizations, including caching several thousand simulated interactions, are necessary to allow the code to run at an acceptable pace. For more details about these optimizations, see \textbf{cite}. 
+
+
+
+\subsection{Explicit Monitoring}
+
+Asking a question allows the robot to query the person's state---does the object he or she desires have a particular property? Because it increases the probability of the human responding, this action serves as an information gathering activity. At the same time, however, it also communicates something about the robot's state. Asking a question communicates that the robot is not sure enough to hand you the correct object. However, these simple yes/no object property questions do not communicate is objects does the robot think that you want. Asking these questions, if anything, communicates to the human that the object the robot wishes to hand you has the property the robot asks about, which obfuscates the robot's true state---which is likely that one of the objects has that property, but others do not. 
 
 
 \section{Continuing Work}
 
+The preliminary work serves mostly as a framework and proof of concept for adding a full set of social-feedback tools. For my thesis, I propose improvements to fix weaknesses of the current system as well as new features to create a more fully social robot.  
+
+\subsection{Additional avenues of social feedback}
+
+Our previous work is incomplete in that the robot's only means of interacting socially with the user was through yes/no questions. In continuing work, we will add new avenues such as eye gaze and gesture, allow the robot to indicate objects by looking and pointing at them. These actions are invaluable for their ability to disambiguate objects that cannot be disambiguated by speech alone, as well as providing a ``cheaper'' means of communication than asking a question. We will also explore more complicated questions that allow the robot learn more about the human's state as well as communicate more about its own.  
+
+\subsection{Representing human state}
+
+In the existing model, the human's actions are interpreted as observations to allow us to estimate the human's desired object, $\omega$. However, we also acknowledge that our actions affect another parameter, which is which object the human believes we are about to hand them. This distribution over $\mathcal{O}$ we call $b_H$. We add this to our state, so our new state representation is a tuple of $(\omega, \mathcal{O}, b_H)$. 
+
+Adding this additional variable causes our state space to increase significantly. In order to remain computationally tractable, we will make the assumption that $b_H$ begins at a known distribution and changes deterministically. Specifically, we update $b_H$ as if it were a Bayes filter \textbf{citation} where the hidden state is the object the robot intends to hand over, and the observations are the robot's action. In this way, $b_H$ mirrors the belief vector of the belief MDP derived from our POMDP, which we notate as $b_R$. 
+\textbf{perhaps include the bayes equations?}
+
+By tracking $b_H$, the robot is able to determine how its actions are perceived by the human. In conjuction with $b_R$, we can ensure that our state is successfully communicated with the human by taking actions such that $b_R$, our belief about what the human wants, matches $b_H$, our estimate of what the human believes we will hand over. 
+
+
+\subsection{Incremental Actions}
+
+The responsiveness of our system is also important for fluid interaction, so the robot always has an accurate model of the human's current state. For this reason, we interpret language and gesture incrementally. In order to make full use of this incremental interpretation, we should also act incrementally. In order to accomplish this, we will design several incremental actions, which allow the robot to change its actions if new knowledge is made available about the human's state. This means, for every avenue social feedback (i.e., speech, gesture, and gaze), we have both \texttt{STOP} and \texttt{CONTINUE} actions which allow the robot to either continue its current action or change its current action. 
+
+\subsection{Real-time POMDP Solutions}
+
+In order to have incremental interpretation and responses, we must be able to solve our POMDP in real time. To achieve this, we plan to use the Partially Observable Sparse Sampling (POSS) algorithm described in \textbf{cite}. This newly developed algorithm is available in the BURLAP library and performs well in domains with large observation spaces such as ours. 
+
+
+\subsection{New Domains}
+
+In this work, we will also explore new domains to test our social feedback system. The current object handoff task is deficient because the task is too simple and clarifications are rarely needed. We will explore additional domains that are more taxing on the communication skills of both human and robot. One task we are considering are object rearrangment, where the robot must rearrange objects according to a pattern the human knows. In this more difficult domain, we expect the benefits of social feedback will be more apparent, and lead to increased speed and accuracy at the task. 
+
 \section{Results}
 
+The results from our previous paper are summarized in Table~\ref{table:expResults}. With our small sample size of 6 participants, two trials each, we see a slight improvement in speed, though a decrease in accuracy. These preliminary studies are too brief to make statements regarding the effectiveness of social feedback, but results are promising for future work. 
+
+\begin{table}
+\begin{center}
+\begin{tabular}{lrr}
+\hline
+Metric & No Feedback & Feedback \\
+\hline
+Picks Correct & 12/13 & 12/14\\
+EUED Time & 17.33s & 13.33s\\
+IOD Time & 2.59\% & 3.18\%\\
+\hline
+\end{tabular}
+\caption{\label{table:expResults} Experimental Results. EUED time is time from
+the end of the first utterance in the request until the end of delivery of the
+desired object and IOD time is time spent delivering incorrect objects.}
+\end{center}
+\end{table}
+
+We have since performed additional user studies that suggest that users find the robot more likeable and competent when it uses social feedback, as well as affirmed the small improvement in speed. 
+
+We expect adding more avenues of feedback will result in greater improvements to speed and accuracy, and that new, more difficult domains will accentuate these improvements. 
+
 \section{Conclusion}
+
+Our existing work provides a strong beginning for our explorations in socially enabled robotics. In my thesis work, I will expand upon our existing approach, adding new avenues for social communication and allowing the robot to better monitor the human's state, to fully equip our robot to naturally and fluidly collaborate with humans. The improvements I propose will allow the robot to communicate its state with the human and monitor the human's state to allow it to provide key information to the human and request help when it is needed. These improvements will add robustness to robotic operation that will, with the help of humans, allow it to tackle new tasks. 
+
+
+
 
 \end{document}
