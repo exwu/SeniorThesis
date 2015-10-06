@@ -44,7 +44,7 @@ $O$ is the observation function, which gives the probability $p(o|s, a)$---the p
 
 \subsection{POMDP Solver: Belief Sparse Sampling}
 
-We formulate this POMDP using the Brown UMBC Reinforcement Learning And Planning (BURLAP) Library \textbf{citation} and use Belief Sparse Sampling \textbf{citation} to solve the POMDP. However, Belief Sparse Sampling was too slow to be used in user trials, so many optimizations, including caching several thousand simulated interactions, are necessary to allow the code to run at an acceptable pace. For more details about these optimizations, see \citet{socialfeedback}. 
+We formulate this POMDP using the Brown UMBC Reinforcement Learning And Planning (BURLAP) Library \citep{burlap} and use Belief Sparse Sampling \citep{bss} to solve the POMDP. However, Belief Sparse Sampling was too slow to be used in user trials, so many optimizations, including caching several thousand simulated interactions, are necessary to allow the code to run at an acceptable pace. For more details about these optimizations, see \citet{socialfeedback}. 
 
 
 \section{Continuing Work}
@@ -60,7 +60,7 @@ Our previous work is incomplete in that the robot's only means of interacting so
 
 In our existing model, the human's actions are interpreted as observations to allow us to estimate the human's desired object, $\omega$. However, we also acknowledge that our actions affect another parameter, which is which object the human believes we are about to hand them. This distribution over $\mathcal{O}$ we call $b_H$. We add this to our state, so our new state representation is a tuple of $(\omega, \mathcal{O}, b_H)$. 
 
-Adding this additional variable causes our state space to increase significantly. In order to remain computationally tractable, we will make the assumption that $b_H$ begins at a known distribution and changes deterministically. Specifically, we update $b_H$ as if it were a Bayes filter \textbf{citation} where the hidden state is the object the robot intends to hand over, and the observations are the robot's actions. In this way, $b_H$ mirrors the belief vector of the belief MDP derived from our POMDP, which we notate as $b_R$. 
+Adding this additional variable causes our state space to increase significantly. In order to remain computationally tractable, we will make the assumption that $b_H$ begins at a known distribution and changes deterministically. Specifically, we update $b_H$ as if it were a Bayes filter \citep{meldon} where the hidden state is the object the robot intends to hand over, and the observations are the robot's actions. In this way, $b_H$ mirrors the belief vector of the belief MDP derived from our POMDP, which we notate as $b_R$. 
 
 By tracking $b_H$, the robot is able to determine how its actions are perceived by the human. In conjuction with $b_R$, we can ensure that our state is successfully communicated with the human by taking actions such that $b_R$, our belief about what the human wants, matches $b_H$, our estimate of what the human believes we will hand over. 
 
