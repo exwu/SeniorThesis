@@ -36,7 +36,7 @@ The \textbf{observations} that the robot can make of its environment (i.e., the 
 
 The \textbf{observation function} describes how observations are produced by the current state. In a POMDP, the current state is hidden, so it is from these observations that the agent (robot) must determine the current state. Our observations pertain mostly to the desired object $\omega$. The details of the observation function are unchanged from the proposal, but I use the same models to update the state variable $b_H$, except from the perspective receiving observations from the robot's actions. 
 
-The \textbf{reward function} describes how the robot receives reward according to its actions and the hidden states. This essentially incentivizes and disinsentivizes certain behaviors. In this domain, we provide a large positive reward for \texttt{PICK}ing the correct object, and a large negative reward for \texttt{PICK}ing the incorrect object. In addition, several smaller negative rewards are given for taking actions such as \texttt{ASK}ing the user questions or as a penaty for ``annoying'' the human. In addition, we give the robot a small reward for how closely $b_H$ matches the distribution the robot believes the 
+The \textbf{reward function} describes how the robot receives reward according to its actions and the hidden states. This essentially incentivizes and disinsentivizes certain behaviors. In this domain, we provide a large positive reward for \texttt{PICK}ing the correct object, and a large negative reward for \texttt{PICK}ing the incorrect object. In addition, several smaller negative rewards are given for taking actions such as \texttt{ASK}ing the user questions or as a penaty for ``annoying'' the human. In addition, we give the robot a small reward for how closely $b_H$ matches the distribution representing the robot's belief about which object the human desires, which we label $b_R$. 
 
 
 \subsection{Incremental Picks}
@@ -46,6 +46,12 @@ On top of the base implementation, I have experimented with variations that impr
 This experiment is running in simulation, where the desired effect of the robot cancelling its pick if additional correcting information is observed. I have not yet run this domain with real robots as solvers (described later) for the POMDP behave poorly with regards to the delayed reward. This suggests approach that abstract out the actions the robot can take to allow for higher level planning, which should be more robust to delayed reward. In the coming semester, I will investigate Abstract MDPs (AMDPs) as a solution to this problem. 
 
 \subsection{Alternative Reward Function}
+
+The reward function of the domain described above is incompatible with the POSS solver used to plan actions (see below), so an alternative had to be devised. 
+
+In the new version of the domain
+
+The \textbf{state} was expanded from $\langle \omega, \mathcal{O}, b_H \rangle$ to $\langle \omega_h, \omega_r, \mathcal{O}, b_H \rangle$. In this new state variable, $\omega_h$ is the same as the old $\omega$: the object the human desires. The new variable $\omega_r$ represents the object the robot has communicated to the human through its actions. This is a hidden variable that the robot must maintain an estimate over, as it is not certain of the interpretation of its actions. This is a parallel interpretation of $b_H$. 
 
 
 
