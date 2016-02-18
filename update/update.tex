@@ -23,34 +23,47 @@ For this project, I built a domain describing an object handover interaction on 
 
 In the basic implementation, we define the states, actions, transition function, reward function, and observations and observation models as follows: 
 
-\textbf{States} are given by a tuple of $\langle \omega, \mathcal{O}, b_H \rangle$. The object the human wishes the robot to handover is $w$, the set of all objects and their locations and names are given as $\mathcal{O}$, and the robot's belief about which object the human believes they will hand over is represented by a distribution $b_H$ over $\mathcal{O}$. 
+\textbf{States} are given by a tuple of $ s = \langle \omega, \mathcal{O}, b_H \rangle$. The object the human wishes the robot to handover is $w$, the set of all objects and their locations and names are given as $\mathcal{O}$, and the robot's belief about which object the human believes they will hand over is represented by a distribution $b_H$ over $\mathcal{O}$. 
 
 The \textbf{actions} available for the robot to take are to \texttt{WAIT} (take no action) \texttt{PICK(x)} some object $x$, \texttt{ASK(x)} about some object(s) $x$, \texttt{POINT(x)} to some object, or \texttt{LOOK(x)} at some object $x$. 
 
-The \textbf{transition function} describes how state changes in response to the robot's actions. The desired object $\omega$ only changes once the robot has \texttt{PICK}ed the correct object. Similarly, $\mathcal{O}$ only changes if an object was picked up. $B_h$, the belief of the human about which object the robot hands over, changes with every action the robot takes. Specifically, $b_H$ is updated in a bayesian manner as if the human had observed the robot's action. Specifically: 
+The \textbf{transition function} describes how state changes in response to the robot's actions. The desired object $\omega$ only changes once the robot has \texttt{PICK}ed the correct object. Similarly, $\mathcal{O}$ only changes if an object was picked up. $B_h$, the belief of the human about which object the robot hands over, changes with every action the robot takes. Specifically, $b_H$ is updated in a Bayesian manner as if the human had observed the robot's action. Specifically: 
 
 $$b_{Ht}(\omega_t) = p(a_t | \omega_t) \sum_{\omega_{t-1}} p(\omega_t|\omega_{t-1}) b_{Ht-1}(\omega_{t-1})$$
 
 $p(a_t | \omega_t)$ gives the probability of observing action $a_t$ (the robot's last action) given an object $\omega_t$, which is the object the human believes the robot is trying to communicate. this directly mirrors the observation functions described below. 
 
-The \textbf{observations} that the robot can make of its environment (i.e., the human's actions) are speech and gesture made by humans. Speech is given by a NLP provided by google, while gesture is provided by a kinect. 
+The \textbf{observations} that the robot can make of its environment (i.e., the human's actions) are speech and gesture made by humans. They are represented by a tuple of $\langle l, g \rangle$, language and gesture. Speech is given by a NLP provided by Google, while gesture is provided by a Kinect. 
 
 The \textbf{observation function} describes how observations are produced by the current state. In a POMDP, the current state is hidden, so it is from these observations that the agent (robot) must determine the current state. Our observations pertain mostly to the desired object $\omega$. The details of the observation function are unchanged from the proposal, but I use the same models to update the state variable $b_H$, except from the perspective receiving observations from the robot's actions. 
 
-The \textbf{reward function} describes how the robot receives reward according to its actions and the hidden states. This essentially incentivizes and disinsentivizes certain behaviors. In this domain, we provide a large positive reward for \texttt{PICK}ing the correct object, and a large negative reward for \texttt{PICK}ing the incorrect object. In addition, several smaller negative rewards are given for taking actions such as \texttt{ASK}ing the user questions or as a penaty for ``annoying'' the human. In addition, we give the robot a small reward for how closely $b_H$ matches the distribution representing the robot's belief about which object the human desires, which we label $b_R$. 
+The language model is as follows: 
+
+$$ p(l|s) = p(l|\omega) = \prod_{\text{word} \in l} \frac{\text{number of instances of word in $\omega$'s vocabulary}}{\text{total number of words in $\omega$'s vocabulary}}$$
+
+The gesture model assumes that the participant picks a point to gesture at by sampling from a Gaussian distribution centered at the object they are pointing at. To get the probability of a given gesture, we return the density of a Gaussian distribution centered at 0 at the angle defined by the vector from the participant's shoulder to the object and the vector from the participant's shoulder to their hand, which we call $\theta_g$. We choose a hand tuned variance $v$. 
+
+$$ p(g|s) = \mathcal{N}(\theta_g| 0, v)$$
+
+We assume language and gesture are conditionally independent given the state, so our total expression for the observation function is 
+
+$$ p(o|s) = p(g|s) p(l|s)$$
+
+
+The \textbf{reward function} describes how the robot receives reward according to its actions and the hidden states. This essentially incentives and disincentivizes certain behaviors. In this domain, we provide a large positive reward for \texttt{PICK}ing the correct object, and a large negative reward for \texttt{PICK}ing the incorrect object. In addition, several smaller negative rewards are given for taking actions such as \texttt{ASK}ing the user questions or as a penaty for ``annoying'' the human. In addition, we give the robot a small reward for how closely $b_H$ matches the distribution representing the robot's belief about which object the human desires, which we label $b_R$. 
 
 
 \subsection{Incremental Picks}
 
 On top of the base implementation, I have experimented with variations that improve the robot's ability to communicate. The first of these variations is the inclusion of an incremental pick action. In this variation, the robot must deliberately choose the pick action until it observes the pick is complete in order to receive the positive (or negative) reward. This allows the robot to continue taking in information from the human as it is picking, as attempting to pick up the object is an indisputable sign of the robot's internal state, allowing the human to correct the robot if the robot is picking the incorrect object. 
 
-This experiment is running in simulation, where the desired effect of the robot cancelling its pick if additional correcting information is observed. I have not yet run this domain with real robots as solvers (described later) for the POMDP behave poorly with regards to the delayed reward. This suggests approach that abstract out the actions the robot can take to allow for higher level planning, which should be more robust to delayed reward. In the coming semester, I will investigate Abstract MDPs (AMDPs) as a solution to this problem. 
+This experiment is running in simulation, where the desired effect of the robot canceling its pick if additional correcting information is observed. I have not yet run this domain with real robots as solvers (described later) for the POMDP behave poorly with regards to the delayed reward. This suggests approach that abstract out the actions the robot can take to allow for higher level planning, which should be more robust to delayed reward. In the coming semester, I will investigate Abstract MDPs (AMDPs) as a solution to this problem. 
 
 \subsection{Alternative Reward Function}
 
 The reward function of the domain described above is incompatible with the POSS solver used to plan actions (see below), so an alternative had to be devised. 
 
-In the new version of the domain, we expanded the state from $\langle \omega, \mathcal{O}, b_H \rangle$ to $\langle \omega_R, \omega_H, \mathcal{O}, b_H \rangle$. In this new state variable, $\omega_R$ is the same as the old $\omega$: the object the human desires. The new variable $\omega_H$ represents the object the robot has communicated to the human through its actions. This is a hidden variable that the robot must maintain an estimate over, as it is not certain of the interpretation of its actions. This is a parallel interpretation of $b_H$. The transition function was adjusted such that the underlying distribution over $\omega_H$ matched $b_H$. Actions, observations and the observation function remained unchanged. On top of the existing reward function defined above, we also add an addition reward that operates over $\omega_R$ and $\omega_H$ . 
+In the new version of the domain, we change the state representation from $\langle \omega, \mathcal{O}, b_H \rangle$ to $\langle \omega_R, \omega_H, \mathcal{O}\rangle$. In this new state variable, $\omega_R$ is the same as the old $\omega$: the object the human desires. The new variable $\omega_H$ represents the object the robot has communicated to the human through its actions. This is a hidden variable that the robot must maintain an estimate over, as it is not certain of the interpretation of its actions. This is a parallel interpretation of $b_H$. The transition function was adjusted such that the underlying distribution over $\omega_H$ matched $b_H$. Actions, observations and the observation function remained unchanged. On top of the existing reward function defined above, we also add an addition reward that operates over $\omega_R$ and $\omega_H$ . 
 
 \begin{equation*}
 	R(\langle \omega_R, \omega_H\rangle) = \begin{cases}
@@ -65,7 +78,30 @@ This reward function is designed to offset the cost of taking more expensive act
 
 However, mathematical analysis demonstrates that this reward function will not perfectly accomplish the behavior we desire. In rewarding $\omega_H$ and $\omega_R$ to be the same, we are essentially asking the robot to maximize the following expression: 
 
-$$ \argmax \sum_\omega
+
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+
+$$ \argmax_{b_H} p(\omega_R == \omega_H) = \argmax_{b_H} \sum_{\omega \in \mathcal{O}}  b_H(\omega) * b_R(\omega)$$
+
+The resulting $b_H$ has the entirety of the probability mass on the object with greatest probability in $b_R$, so the robot will express full certainty on the object with the greatest probability in $b_R$. This is not the behavior we would like the robot to present---rather, we would prefer if the robot could express the uncertainty about which objects the human desires as represented by $b_R$, which requires $b_H$ to match $b_R$ as closely as possible.
+
+Because this version of the domain does not produce the behavior we want, the next step is to address the original incompatibility of the reward function to work with the POSS solver. This line of inquiry was also useful, and showed that rewarding the robot to offset the cost of communication is a good means of producing reliable and consistent communication. 
+
+
+\section{Performance and Solvers}
+
+
+A POMDP domain is a problem formulation; solvers are programs that use the problem formulation to derive a solution. In this case, a solution is an action that should be executed in response to an inputted state. Solving a POMDP is a computationally expensive task that can take anywhere from a few seconds to several minutes to complete. This is not ideal for human-robot interaction, as, in the meantime, the human participant is waiting or giving the robot additional commands that it cannot incorporate as it plans its next action. In previous work, this was addressed by precomputing the correct action ahead of time and using nearest-neighbor to choose actions at the time of interaction. This approach provided near instantaneous results, but had the downside of imperfect performance at completely novel states as well as a loss of flexibility, as the policy would have to be recomputed if anything about the domain were to change. 
+
+Since then, we have addressed the problem by using a new solver called Partially Observable Sparse Sampling (POSS) which provides much faster performance; it averages 2 seconds per action for 4 objects or 5 seconds per action for 6 objects real time, with room for optimization. This allows us to change the objects on the table freely without having to recalculate anything. 
+
+However, 5 seconds is still a long latency for interactive tasks, especially if the robot is no longer observing the human's actions and is fully concentrated on planning its next one. For this reason, I have made a multithreaded version of this program which allows the robot to continue observing and updating its state as it plans. Though untested with human participants so far, the hope is that it will mitigate the latency while the robot plans and maintain a more accurate robot state. 
+
+
+\section{Theoretical Formulation}
+
+So far the description of the domain has been specific to its actual implementation. We would like to verify its correctness 
 
 
 \end{document}
