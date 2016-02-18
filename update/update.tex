@@ -2,6 +2,7 @@
 
 \usepackage[margin=0.8in]{geometry}
 \usepackage{natbib}
+\usepackage{amsmath}
 %\bibliographystyle{unsrtnat}
 
 
@@ -49,10 +50,22 @@ This experiment is running in simulation, where the desired effect of the robot 
 
 The reward function of the domain described above is incompatible with the POSS solver used to plan actions (see below), so an alternative had to be devised. 
 
-In the new version of the domain
+In the new version of the domain, we expanded the state from $\langle \omega, \mathcal{O}, b_H \rangle$ to $\langle \omega_R, \omega_H, \mathcal{O}, b_H \rangle$. In this new state variable, $\omega_R$ is the same as the old $\omega$: the object the human desires. The new variable $\omega_H$ represents the object the robot has communicated to the human through its actions. This is a hidden variable that the robot must maintain an estimate over, as it is not certain of the interpretation of its actions. This is a parallel interpretation of $b_H$. The transition function was adjusted such that the underlying distribution over $\omega_H$ matched $b_H$. Actions, observations and the observation function remained unchanged. On top of the existing reward function defined above, we also add an addition reward that operates over $\omega_R$ and $\omega_H$ . 
 
-The \textbf{state} was expanded from $\langle \omega, \mathcal{O}, b_H \rangle$ to $\langle \omega_h, \omega_r, \mathcal{O}, b_H \rangle$. In this new state variable, $\omega_h$ is the same as the old $\omega$: the object the human desires. The new variable $\omega_r$ represents the object the robot has communicated to the human through its actions. This is a hidden variable that the robot must maintain an estimate over, as it is not certain of the interpretation of its actions. This is a parallel interpretation of $b_H$. 
+\begin{equation*}
+	R(\langle \omega_R, \omega_H\rangle) = \begin{cases}
+		3  & \text{if } \omega_H == \omega_R \\
+		0  & \text{otherwise}
+	\end{cases}
+\end{equation*}
 
+The reward returned by this function is added to the reward defined in the base domain. 
+
+This reward function is designed to offset the cost of taking more expensive actions: if you have correctly communicated the object you believe the human has to the human, the cost of communicative actions is offset. As a result, running the domain in simulation results in more communicative actions which reflect which object the robot believes the human desires. 
+
+However, mathematical analysis demonstrates that this reward function will not perfectly accomplish the behavior we desire. In rewarding $\omega_H$ and $\omega_R$ to be the same, we are essentially asking the robot to maximize the following expression: 
+
+$$ \argmax \sum_\omega
 
 
 \end{document}
