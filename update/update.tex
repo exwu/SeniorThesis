@@ -3,6 +3,8 @@
 \usepackage[margin=0.8in]{geometry}
 \usepackage{natbib}
 \usepackage{amsmath}
+\usepackage{tikz}
+
 %\bibliographystyle{unsrtnat}
 
 
@@ -108,37 +110,89 @@ In particular, we would like a full description of the system that describes how
 
 \subsection{Variables}
 
-Let $a_t$ be an action taken at time step $t$ by the robot. It is observed by the human. 
+\newcommand{\Beta}{\mathcal{B}}
+We define two agents, the human and the robot. Each agent has their own state, composed of a tuple $s = \langle i, b, B \rangle$ for the robot and $\sigma = \langle \iota, \beta, \Beta \rangle$ for the human. The robot's $i$ is the object it will hand over to the human whereas the human's $\iota$ is the object the human desires. Both $i$ and $\iota$ are hidden from their counterart, so the robot has a state variable $b(\iota)$ that is a distribution over $\iota$, representing its belief about which object the human desires. Likewise, the human maintains a state variable $\beta(i)$ over the human's object $i$ that tracks the human's belief about which object the robot will hand over. Once again, both $b$ and $\beta$ are hidden from their counterparts, so the robot maintains a distribution over $\beta$ called $B(\beta(i))$ and the human maintains a distribution over $b$s called $\Beta(b(\iota))$. 
 
-Let $i \in \mathcal{O}$ by an object on the table. Let $\omega \in \mathcal{O}$ be the true object desired by the human. 
+In addition, we define an action $a_R$ to be an action performed by the robot and observed by human, and $a_H$ to be an acton perfomed by the human and observed by the robot. Because these action are also observble, we will also refer to actions takn by the robot as $o_R$ and actions taken by the human $o_H$ in contexts where they are treated as observations. 
 
-Let $b_R$ be a categorical distribution over objects, where $b_R(i)$ gives the probability that object $i$ is the desired object $\omega$. 
+All of the variables mentioned above can be parameterized by time steps. For the robot, actions, observatons, and state variables will be parameterized by a time $t$. For the human, we will use time varible $\tau$, where $\tau$ is defined a half step after $t$, i.e., $\tau = t + 0.5$. This is illustrated in the diagram below. 
 
-Let $B_H$ be a distribution over distributions, where $B_H(b_R)$ gives the probability $b_R$ is the distribution over objects that reflects the human's belief about which object the robot is referring to. Note that previously in this report we have been referring to $\hat b_H$ which is an estimator for $B_H$ that is a distribution over objects. 
 
-We would like an expression to update $B_H$. 
-Written in math, this is: 
+\tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=4em]
+\tikzstyle{v} = [circle, draw, fill=white, minimum size=4em]
+\tikzstyle{line} = [draw, > = stealth, -latex]
 
-$$p(B_{Ht+1} |  B_{Ht}, a_t)$$
 
-If this expression is too computationally intensive, we would also like an update to some estimator for it called $\hat b_H$. 
 
+\begin{center}
+	\begin{tikzpicture}[node distance = 2.5cm, auto]
+		%actions
+		\node [v] (ort) {$o_{R,t}$};
+		\node [v, right of=ort] (oht) {$o_{H, \tau}$};
+		\node [v, right of=oht] (ortp1) {$o_{R,t+1}$}; 
+		\node [v, right of=ortp1] (ohtp1) {$o_{H,\tau+1}$}; 
+		\node [v, left of=ort] (ohtm1) {$o_{H, \tau-1}$};
+		\node [v, left of=ohtm1] (ortm1) {$o_{R, t-1}$};
+		% states
+		\node [h, above of=ort] (st) {$s_t$}; 
+		\node [h, below of=oht] (sigmat) {$\sigma_\tau$};
+		\node [h, above of=ortm1] (stm1) {$s_{t-1}$}; 
+		\node [h, below of=ohtm1] (sigmatm1) {$\sigma_{\tau-1}$};
+		\node [h, above of=ortp1] (stp1) {$s_{t+1}$}; 
+		\node [h, below of=ohtp1] (sigmatp1) {$\sigma_{\tau+1}$};
+		% edges; state -> obs
+		\path [line] (st) edge (ort); 
+		\path [line] (sigmat) edge (oht); 
+		\path [line] (stm1) edge (ortm1); 
+		\path [line] (sigmatm1) edge (ohtm1); 
+		\path [line] (stp1) edge (ortp1); 
+		\path [line] (sigmatp1) edge (ohtp1); 
+		% state -> state
+		\path [line] (stm1) edge (st); 
+		\path [line] (st) edge (stp1); 
+		\path [line] (sigmatm1) edge (sigmat); 
+		\path [line] (sigmat) edge (sigmatp1); 
+		% a -> state
+		\path [line] (ortm1) edge (sigmatm1); 
+		\path [line] (ort) edge (sigmat); 
+		\path [line] (ortp1) edge (sigmatp1); 
+		\path [line] (ohtm1) edge (st); 
+		\path [line] (oht) edge (stp1); 
+	\end{tikzpicture}
+\end{center}
+
+
+Notice that when $o_{R,t}$ is treated as an action, its time step is changed to $a_{R, \tau}$. Similarly, when $o_{H, \tau}$ is treated as an action, we call it $a_{H, t+1}$. 
+
+We would like an expression that gives us $p(s_t | a_{H,1:t})$. Breaking the state into its three components, we must define update expressions for $p(i_t | a_{H,1:t})$, the object level update; $p(b_t | a_{H,1:t})$, the categorical level update; and $p(B_t | a_{H,1:t})$, the dirichlet level update. 
+
+\subsection{Item Level Update}
+
+The question of how ``which object does the robot hand to the human given the human's actions'' is nonsensical from the perspective of the robot, since this is exactly what we are trying to decide by solving our POMDP. However, since the object the robot will hand over is unknown to the human, it is useful to define a transition function for the human to use as an estimate to update its belief about the robot's $i$, $\beta(i)$. This function is given below: 
+
+\begin{align*}
+	p(i_t | a_{H,1:t}) &= \sum_{i_{t-1}} p(i_t, i_{t-1} | a_{H, 1:t}) \\
+	&= \sum_{i_{t-1}} p(i_t| i_{t-1} , a_{H, 1:t}) p(i_{t-1} | a_{H,1:t}) \\
+	&= \sum_{i_{t-1}} p(i_t| i_{t-1} , a_{H,t}) p(i_{t-1} | a_{H,1:t-1}) \\
+\end{align*}
 
 \subsection{Categorical Level Update} 
 
-The update to $b_R$ is a standard hidden markov model update over objects $i$ where the observations are actions $a$. 
+The update to $b$ and $\beta$ is a standard hidden markov model update over objects $i$ where the observations are actions $a$. 
 
 \begin{align} 
 	b_{Rt}(i_{t}) = p(i_{t}|a_{1:t}) &= p(a_t |i_t) \sum_{i_{t-1}} p(i_{t}|i_{t-1})  p(i_{t-1} | a_{1:t-1}) \\ 
 	&= p(a_t |i_t) \sum_{i_{t-1}} p(i_{t}|i_{t-1}) b_{Rt-1}(i_{t-1}) 
 \end{align}
 
-Define a function that takes in a $b_{Rt}$ and action $a_t$ and returns the new belief $b_R(t+1)$ to be \texttt{update}($b_{Rt}, a_t$). 
+This update can be written as a matrix multiplication: 
+
+
 
 
 \subsection{Dirichlet Level Update}
 
-Now that we've defined how $b_R$ is updated, we can define $b_H$ in terms of $b_R$'s update. 
+Now that we've defined how $b_R$ is updated, we can define $B_H$ in terms of $b_R$'s update. 
 
 
 
