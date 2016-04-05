@@ -1,6 +1,11 @@
 \documentclass{article}
 
 \usepackage[margin=0.8in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{natbib}
+\usepackage{bbm}
 %\usepackage{natbib}
 %\bibliographystyle{unsrtnat}
 
@@ -19,11 +24,49 @@
 
 \subsection{Model Description}
 
+To model this human-robot interactive task, we will use a Partially Observable Markov Decision Process (POMDP) \textbf{citation}. POMDPs are used to model Markov Decision Processes (MDPs)\textbf{citation} where the true state is unknown, and observations must be made to perform a belief distribution over hidden states. In order to inform the construction of our POMDP model, we will examine a two-agent bayes filter. 
+
+
+
 \subsection{POMDP}
 
 \subsubsection{Observation Function}
+
+According to our double-agent model, the human emits observations as though it were an agent interacting with our robotic agent. Thus, we choose an observation model that depends on the human's belief about the robot's state, $\beta$. Specifically, the human will choose an action according to the its estimate that the robot will hand them that object. In order to define this function, we will first have to define a base-level observation function. 
+
 \paragraph{Base-Level Observation Function}
+
+The base level observation function describes the probability of an observation conditioned only on the object: $p(o|\iota)$. For our object delivery domain, we will define two base-level observations, one for language and one for gesture. 
+
+\noindent\textit{Speech Model:} Language is interpreted according to a unigram gesture model. An utterance $l$ is broken down into individual words, $w \in l$: 
+
+\begin{equation}
+	p(l|\iota) = \prod_{w \in l} p(w|\iota) = \prod_{w\in l} \frac{\texttt{count}(w, \iota.\texttt{vocab})}{|\iota.\texttt{vocab}|}
+\end{equation}
+
+where $\texttt{count}(w, \iota.\texttt{vocab})$ is the number of times word $w$ appears in $\iota$'s vocabulary. 
+
+\noindent\textit{Gesture Model:} All gestures are interpreted as a straight armed point. These pointing gestures are selected from a normal distribution centered at the object's location. 
+
+Define the angle between the vector defined by the pointing gesture and the vector from the human's arm to the object $\iota$ to be $\theta_\iota$. The probability of a particular gesture is then
+
+\begin{equation}
+p(g|\iota) = \mathcal{N}(\theta_\iota | 0, v)
+\end{equation}
+
+where $v$ is a hand-tuned variance. 
+
 \paragraph{Posterior Observation Function}
+
+We will use the base-level observation functions defined above to define a posterior observation that considers the effects of the base level observation function. Specifically, the human chooses an observation proportional to the robot's belief in the desired object if the human had chosen that observation, i.e., 
+
+\begin{align}
+p(o|s) = p(o|\iota, \beta) &\triangleq \eta p(\iota|o)_\beta \\
+&= \eta \frac{p(o|\iota) p(\iota)}{\sum_{\iota^\prime} p(o|\iota^\prime)p(\iota^\prime)} 
+\end{align}
+
+
+
 \paragraph{Toy Example}
 \subsubsection{Transition Function}
 
