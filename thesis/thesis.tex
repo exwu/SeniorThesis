@@ -16,19 +16,83 @@
 
 \tableofcontents
 
+\newpage
+\section{Abstract}
+\newpage
+
 \section{Introduction}
 
-\section{Related Works}
+Collaboration is a process that relies heavily on communication for its success. When humans collaborate, this communication is both obvious and implicit---we not only instruct and request aid from each other, but we also tacitly monitor our partners for signs of approval and understanding while producing these signals ourselves. However, in robotics, many of these vital components of successful communication are missing or lost. The absence of these signals likely account for numerous failures in human-robot collaborative tasks. In order to give robots these missing communicative skills, we employ \emph{social feedback} signals to provide human-like communication to both inform the human participant of the robot's state and request information from the participant. 
+
+Feedback refers to the responses that are received by an agent when it takes some action. These feedback responses inform the agent about the success or failure of its actions. \emph{Social feedback} therefore refers to social signals that convey this information. These can be explicit signals, such as ``I want this object'', or implicit signals, like a perplexed expression. When humans interact with another human, they use this feedback to improve the flow and clarity of the collaboration, which in turn improves its success. For my thesis work, I have developed a framework that describes how robotic agent should likewise generate social feedback for its human partner in human-collaborative tasks, and show that it improves the speed and accuracy of human-robot interaction. 
+
+In this work, we address the object delivery task. In this task, a set of objects are laid out on a table within the robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
+
+We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP), which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
+
+To evaluate our approach, WE DO NOTHING HAHAHAHAHAHAHAHAHAHAHAHAHAH. 
+
+
+\section{Related Work}
 
 \section{Technical Approach}
 
+\subsection{POMDP Overview}
+
 \subsection{Model Description}
 
-To model this human-robot interactive task, we will use a Partially Observable Markov Decision Process (POMDP) \textbf{citation}. POMDPs are used to model Markov Decision Processes (MDPs)\textbf{citation} where the true state is unknown, and observations must be made to perform a belief distribution over hidden states. In order to inform the construction of our POMDP model, we will examine a two-agent bayes filter. 
+To model this human-robot interactive task, we will use a Partially Observable Markov Decision Process (POMDP) \textbf{citation}. POMDPs are used to model Markov Decision Processes (MDPs)\textbf{citation} where the true state is unknown, and observations must be made to perform a belief distribution over hidden states. In order to inform the construction of our POMDP model, we will examine a two-agent bayesian network. 
+
+
+\tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=4em]
+\tikzstyle{v} = [circle, draw, fill=white, minimum size=4em]
+\tikzstyle{line} = [draw, > = stealth, -latex]
 
 
 
-\subsection{POMDP}
+\begin{center}
+	\begin{tikzpicture}[node distance = 2.5cm, auto]
+		%actions
+		\node [v] (ort) {$o_{R,t}$};
+		\node [v, right of=ort] (oht) {$o_{H, \tau}$};
+		\node [v, right of=oht] (ortp1) {$o_{R,t+1}$}; 
+		\node [v, right of=ortp1] (ohtp1) {$o_{H,\tau+1}$}; 
+		\node [v, left of=ort] (ohtm1) {$o_{H, \tau-1}$};
+		\node [v, left of=ohtm1] (ortm1) {$o_{R, t-1}$};
+		% states
+		\node [h, above of=ort] (st) {$s_t$}; 
+		\node [h, below of=oht] (sigmat) {$\sigma_\tau$};
+		\node [h, above of=ortm1] (stm1) {$s_{t-1}$}; 
+		\node [h, below of=ohtm1] (sigmatm1) {$\sigma_{\tau-1}$};
+		\node [h, above of=ortp1] (stp1) {$s_{t+1}$}; 
+		\node [h, below of=ohtp1] (sigmatp1) {$\sigma_{\tau+1}$};
+		% edges; state -> obs
+		\path [line] (st) edge (ort); 
+		\path [line] (sigmat) edge (oht); 
+		\path [line] (stm1) edge (ortm1); 
+		\path [line] (sigmatm1) edge (ohtm1); 
+		\path [line] (stp1) edge (ortp1); 
+		\path [line] (sigmatp1) edge (ohtp1); 
+		% state -> state
+		\path [line] (stm1) edge (st); 
+		\path [line] (st) edge (stp1); 
+		\path [line] (sigmatm1) edge (sigmat); 
+		\path [line] (sigmat) edge (sigmatp1); 
+		% a -> state
+		\path [line] (ortm1) edge (sigmatm1); 
+		\path [line] (ort) edge (sigmat); 
+		\path [line] (ortp1) edge (sigmatp1); 
+		\path [line] (ohtm1) edge (st); 
+		\path [line] (oht) edge (stp1); 
+	\end{tikzpicture}
+\end{center}
+
+In the above model, we represent robot states $s_t$, human states $\sigma_\tau$, and observations generated by the robot $o_{R,t}$ and by the human $o_{H,t}$. Crucially, we observe that 
+
+
+
+
+\subsection{POMDP Definition}
 
 \subsubsection{Observation Function}
 
@@ -69,6 +133,10 @@ p(o|s) = p(o|\iota, \beta) &\triangleq \eta p(\iota|o)_\beta \\
 
 \paragraph{Toy Example}
 \subsubsection{Transition Function}
+
+\subsection{Policy Generation}
+
+\subsection{Systems}
 
 
 \section{Evaluation}
