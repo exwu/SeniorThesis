@@ -7,6 +7,7 @@
 \usepackage{natbib}
 \usepackage{bbm}
 \usetikzlibrary{shapes.geometric}
+\usetikzlibrary{calc,positioning,shapes,arrows}
 %\usepackage{natbib}
 %\bibliographystyle{unsrtnat}
 \newcommand{\Iota}{\mathcal{I}}
@@ -207,8 +208,46 @@ p(o|s) = p(o|\iota, \beta) &\triangleq \eta p(\iota|o)_\beta \\
 
 \subsection{Policy Generation}
 
-\subsection{Systems}
 
+\subsection{Incremental System Design}
+
+Interactive systems that involve speech often make an assumption that the interaction can be split neatly into turns: first one speaker provides a complete utterance, and then the other. This is often not the case, and it is a subtle matter to determine when one turn is completed and the other agent can begin to speak. As a consequence, many systems involving dialogue, including earlier iterations of this project, do not ``hear'' utterances or gestures while the agent is speaking or acting. Any speech or gestures the human made while the robot was executing its action were dropped and never incorporated into the robot's belief about the state. An additional problem was that while the robot was planning its next action, it would also not incorporate any observations made. This was a significant affect, as it could take up to 10 seconds of planning for the robot to make its next move. As a consequence, most observations would be dropped unless we incorporated a system of turn-taking where we waiting a set amount of time for the human to provide any speech and gesture input. 
+
+While turn-taking is an adequate solution for dialogue-only systems, full fledged interaction is more continuous. Even when speaking in a turn-like manner, agents give signals back and forward to signal their understanding and also provide corrections and interruptions.
+
+In order to create more fluid interactions, we employ a multithreaded solution that separates the state estimation, planning, and executions of actions. This allows our robot to simultaneously track the human's belief, plan its next move, and interact with the human. 
+
+
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=8em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, > = stealth, -latex]
+
+
+\begin{center}
+\begin{tikzpicture}[auto]
+	\node [block] (st) {State Tracker}; 
+	\node [left = 2.5cm of st] (n) {};
+	\node [block, right = 2.5cm of st] (ap1) {Asynchronous Planner}; 
+	\node [block, above = 0.5cm of ap1] (ap2) {Asynchronous Planner}; 
+	\node [block, below = 0.5cm of ap1] (ap3) {Asynchronous Planner};
+	\node [block, right = 2.5cm of ap1] (aq) {Action Queue};
+	\path [line] (st) -- node[above] {belief state} (ap1); 
+	\path [line] (st) |- node[above right, pos=0.72] {belief state} (ap2); 
+	\path [line] (st) |- node[above right, pos=0.72] {belief state} (ap3); 
+	\path [line] (ap1) -- node[above] {action} (aq); 
+	\path [line] (ap2) -| node[above left, pos=0.22] {acton} (aq); 
+	\path [line] (ap3) -| node[above left, pos=0.22] {acton} (aq); 
+	\path [line] (n) -- node[above]{observations} (st);
+\end{tikzpicture}
+\end{center}
+
+
+
+
+\paragraph{State Tracker} The state tracker incorporates observations from the human at a very high rate, allowing the tracker to always have access to the most up-to-date state estimation. However, our domain description requires the robot to choose an action between each consecutive observation. We address this by feeding the model a \texttt{wait} action unless the planning thread has provided a action that has not yet been integrated, in which case we use that action. This also requires minimal dependency between actions and observations, which our model avoids. 
+
+\paragraph{Asynchronous Planner} A separate thread runs the planning code. Planning can take several seconds (though less is ideal), during which the robot is not only idle, but also deaf and blind. Running the planning code on a separate thread allows the robot to continuing observing and interacting with the robot while the robot plans its next move. In addition, we can use several planning threads at once, with separate policies to control the robot's face, arms, head angle, etc. In our work, we use one thread to plan for the POMDP domain described above, and another to animate the Baxter's face to show an facial expression of increasing confusion with the entropy of the belief state. 
+
+\paragraph{Action Queue} The planning threads push their actions onto a queue which executes them one by one, allowing the planning threads to resume planning if the actions they produce take some time to execute. An additional advantage is that this allows the robot to be constantly acting, with minimal idle time. 
 
 \section{Evaluation}
 
