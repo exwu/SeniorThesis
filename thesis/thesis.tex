@@ -12,16 +12,38 @@
 %\bibliographystyle{unsrtnat}
 \newcommand{\Iota}{\mathcal{I}}
 
-\title{Social Feedback for Robotic Collaboration}
-\author{Emily Wu, Brown University}
+\bibliographystyle{unsrtnat}
+
+
 \begin{document}
-\maketitle
+\pagenumbering{gobble} 
 
+\vspace*{8cm}
+
+\begin{raggedleft}
+	\scshape
+	\huge \textbf{Social Feedback For Robotic Collaboration} \\
+	\vspace{0.3cm}
+	\Large 
+	Emily Wu  \\
+	Professor Stefanie Tellex \\
+	Professor Jeff Huang \\
+	Brown University \\
+	May 2016 \\
+\end{raggedleft}
+
+\newpage
+
+
+
+\vspace*{\fill}
+\section*{Abstract}
+Robotic collaboration requires not just communication from the human to the robot, but also from the robot to the human. We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we describe a Partially Observable Markov Decision Process model that incorporates the human's belief about the robot's intent. We then engineer a system that can respond in near-real time that is supplemented with a multithreaded interaction model that allows for more responsive human-robot interactions. 
+\vspace*{\fill}
+\newpage
 \tableofcontents
-
 \newpage
-\section{Abstract}
-\newpage
+\pagenumbering{arabic} 
 
 \section{Introduction}
 
@@ -31,7 +53,7 @@ Feedback refers to the responses that are received by an agent when it takes som
 
 In this work, we address the object delivery task. In this task, a set of objects are laid out on a table within the robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
 
-We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP), which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
+We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling10}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
 
 To evaluate our approach, Stop. Hammertime. 
 
@@ -40,6 +62,42 @@ To evaluate our approach, Stop. Hammertime.
 
 mention that most other works must hard code robot actions and how/when they are used. we provide an organic way to generate those actions. 
 
+Work demonstrating the importance of social feedback in human-human
+communication has been done in the field of psycholinguistics. In  \cite{clark04}, one human (labeled the builder)
+builds a Lego model according to instructions given by another human
+(labeled the director). In the feedback-free trials, the director's
+instructions were prerecorded, and the resulting models were very
+inaccurate (in fact no model was completely correct). In the feedback
+trials, errors were reduced by a factor of eight. Our goal is to
+enable a robot to collaborate with a human in this way.
+
+
+Other work with collaborative robots exists, for example, \cite{foster12} have done research with a bar-tending robot. This robot follows a rule-based state estimator, and delivers drinks from fixed positions behind the bar to multiple users based on their speech and torso position. 
+We expand the scope of the problem: we do not use a rule-based state planner, our items are not in fixed positions, and our gesture model uses pointing instead of torso position. 
+
+In \cite{bohus14},  a robotic building guide directs guests to find specific rooms. Our project addresses a similar domain, requiring the interpretation of users' requests, but differs in the task and the type of communication necessary to accomplish that task. 
+
+Other work involving robotic object delivery also exists. Some approaches have no social feedback and will either deliver the wrong item or do nothing if given a
+request it does not understand~\citep{tellex11,matuszek12,tellex12,misra14}. Language only feedback models also 
+exist~\citep{chai14,macmahon06,tellex11,matuszek12,guadarrama14,hewlett11,misra14}, and several gesture only models~\citep{waldherr00,marge11}.
+
+
+\cite{matuszek14} shows promising work in fusing language and complex gesture to understand references to multiple objects at once. We build off this work by including social feedback. 
+
+In the field of computational linguistics, previous work exists in resolving referring expressions incrementally, such as~\cite{schlangen09,Zender2008Conceptual,Gieselmann}. Other work in that community also incorporates gesture, and/or eye gaze~\citep{kennington13,kennington15a}, but the given work does not incrementally update gesture along with speech. ~\cite{chairmi} provides work towards resolving referring expressions in a different domain, but does not address the task of acting on the results of these referring expressions. In~\cite{kruijffclarification}, they propose a system for planning to ask for clarifications, which covers a wide scope of knowledge failures. In this work, we are interested only in a small subset of these clarifications, and address the problem of how and when these clarifications should be used in a concrete human-robot collaboration task. 
+
+POMDP approaches to dialog~\citep{young13} are quite common, but treat dialog
+as a discrete, turn-taking interaction. The Dialog State Tracking
+Challenge~\citep{williams2013dialog} a notable driving force for computer
+dialog understanding, treats dialog in this turn-based way. Our model is also based off a turn-based interaction, but we provide a systems solution to allow our model to behave more incrementally.  
+
+Interactive POMDPs (I-POMDPs)~\citep{gmytrasiewicz2005framework} describe a multi-agent POMDP that allows agents to anticipate each other's actions by forming beliefs over action and observation histories. This work attempts to accomplish the same, but makes more specialized assumptions that allow for a more tractable state space. 
+
+Alternative approaches to
+POMDPs include cognitive architecutres such as SOAR~\citep{soar} or
+DIARC~\citep{diarc}.  By taking a probabilistic approach, we can seemlessly
+fuse information from multiple sources and explicitly reason about the
+robot's uncertainty when choosing actions.
 \section{Technical Approach}
 
 \subsection{POMDP Overview}
@@ -511,6 +569,7 @@ Use of the $\beta$ variable can be expanded to include uncertainty over the valu
 
 The object delivery domain can also be abstracted to a domain where the goal is not to determine which object the human wants, but the human's intent in general. This system of tracking the human's belief about the robot's communicated intent can be widely applied to other human-robot interaction tasks. 
 
+\bibliography{main}
 
 
 \end{document}
