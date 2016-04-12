@@ -53,7 +53,7 @@ Feedback refers to the responses that are received by an agent when it takes som
 
 In this work, we address the object delivery task. In this task, a set of objects are laid out on a table within the robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
 
-We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling10}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
+We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
 
 As an initial evaluation, we run our model in simulation to showcase improved speed and accuracy in the object delivery task. 
 
@@ -355,7 +355,7 @@ If $a_t$ is any other action:
 
 \paragraph{Belief Transition Function}
 
-The human's belief about which object the robot will hand over, $\beta_t$, is informed by the actions the robot takes. In the same way the robot's belief state $b$ is a summary of all the observations the robot has made \textbf{cite that Littman paper}, $\beta_t$ is a summary of all observations the human has made of the robot's actions, and reflects the human's estimate about the robot's true state. We therefore update $\beta_t$ according to Bayesian probabilities the same way. The following is a standard Markovian update: 
+The human's belief about which object the robot will hand over, $\beta_t$, is informed by the actions the robot takes. In the same way the robot's belief state $b$ is a summary of all the observations the robot has made~\citep{kaelbling99}, $\beta_t$ is a summary of all observations the human has made of the robot's actions, and reflects the human's estimate about the robot's true state. We therefore update $\beta_t$ according to Bayesian probabilities the same way. The following is a standard Markovian update: 
 
 For a particular state $\iota_t$, its probability after $t$ observations is given as follows: 
 
@@ -414,7 +414,9 @@ If we assume that $\beta_0$ begins as the uniform distribution over objects, we 
 
 \subsection{Policy Generation}
 
-It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP add speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. In this paper, we use the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\cite{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to pick the correct objects. 
+It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP add speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. In this paper, we use the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to pick the correct objects. 
+
+We implement this model within the Brown UMBC Reinforcement Learning And Planning~/citep{burlap} framework, which allows for many standard AI and Reinforcement learning algorithms to be used with our domain. 
 
 
 \subsection{Incremental System Design}
@@ -459,9 +461,20 @@ In order to create more fluid interactions, we employ a multithreaded solution t
 
 \section{Evaluation}
 
+Due to difficulties with the POSS algorithm, we return to Belief Sparse Sampling~\cite{bss} (BSS) to evaluate the efficacy of our model. BSS, however, takes several minutes to generate an action, which is too slow for user interaction. Instead, we evaluate the performance of our model in simulation. A procedure for user studies with human participants is also described. 
+
 \subsection{Sample Interactions}
 
-\subsection{User Studies}
+\subsection{Results in Simulation}
+
+To evaluate the performance of our model, we two simulated trials: one without any social feedback actions (only \texttt{pick(i)} and \texttt{wait}), and one with non-social feedback actions and a random subset of social feedback actions of fixed size. Each trial uses a different set of randomized actions (to reduce computation costs). Results are presented below: 
+
+\subsection{User Studies Procedure}
+
+Users are acquired from convenience sampling by inviting volunteers from the Brown University CIT building. For each user, two trials are run: a baseline trial without any social feedback actions, and a social-feedback trial with social feedback actions enabled. For each trial, the user is given a microphone and invited to use speech and gesture to ask the robot for a specific item on the table, and to not change that object until it was picked up. After their requested object is picked up, they should request a new object and repeat the procedure until the robot had handed them all objects on the table. Whether the social or non-social trial was performed first was decided randomly for each user. Between the two trials, they are given a survey to assess the qualitative aspects of the interaction, including metrics such as the robot's perceived intelligence, friendliness, etc. 
+
+This procedure is based off a previous user study run for an earlier iteration of this project. In this user study, we noticed a small affect showing the increased speed of interaction with social feedback actions enabled. However, this study was run with only six participants, so these affects were likely not statistically significant. When user studies are run in the future, we will have a larger sample size, but also increase the difficulty of the task by adding more objects, which should further highlight the necessity of social feedback. 
+
 
 \section{Future Work}
 
@@ -474,6 +487,10 @@ Use of the $\beta$ variable can be expanded to include uncertainty over the valu
 The object delivery domain can also be abstracted to a domain where the goal is not to determine which object the human wants, but the human's intent in general. This system of tracking the human's belief about the robot's communicated intent can be widely applied to other human-robot interaction tasks. 
 
 \section{Acknowledgements}
+
+This thesis is the result of work that has been ongoing since December 2014. I would like to acknowledge my many collaborators, Advik Guha, Miles Eldon, David Whitney, Horatio Han, Nakul Gopalan, Lawson Wong, James MacGlashan, and John Oberlin. 
+
+This project is part of an ongoing initiative towards social robotics by Brown University's H2R laboratory under Professor Stefanie Tellex. 
 
 \section{Appendix}
 
