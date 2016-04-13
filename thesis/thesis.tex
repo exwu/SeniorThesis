@@ -1,5 +1,10 @@
 \documentclass{article}
 
+\usepackage{multicol}
+ 
+\usepackage{float}
+
+ 
 \usepackage[margin=0.8in]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -13,7 +18,10 @@
 \newcommand{\Iota}{\mathcal{I}}
 
 \bibliographystyle{unsrtnat}
+\setlength{\columnsep}{0.8cm}
 
+\title{Social Feedback For Robotic Collaboration}
+\author{Emily Wu}
 
 \begin{document}
 \pagenumbering{gobble} 
@@ -45,6 +53,9 @@ Robotic collaboration requires not just communication from the human to the robo
 \newpage
 \pagenumbering{arabic} 
 
+\maketitle
+\begin{multicols}{2}
+	
 \section{Introduction}
 
 Collaboration is a process that relies heavily on communication for its success. When humans collaborate, this communication is both obvious and implicit---we not only instruct and request aid from each other, but we also tacitly monitor our partners for signs of approval and understanding while producing these signals ourselves. However, in robotics, many of these vital components of successful communication are missing or lost. The absence of these signals likely account for numerous failures in human-robot collaborative tasks. In order to give robots these missing communicative skills, we employ \emph{social feedback} signals to provide human-like communication to both inform the human participant of the robot's state and request information from the participant. 
@@ -53,7 +64,14 @@ Feedback refers to the responses that are received by an agent when it takes som
 
 Many existing works focus on the task of interpreting human communications\citep{tellex11,matuszek12,tellex12,misra14}, but provide no response if the interpretation fails. As a consequence, it becomes difficult to tell whether the robot is still making progress in interpreting the request, or has failed. Some works do allow for robotic responses to ambiguous situations, but the manner of their responses are hard coded, often limited to generic requests, such as ``please repeat the question''. In this work, we provide a means to generate these requests in the form of language and gesture that can flexibly represent the robot's state as well as inform the human in such a way so that allows the human to help the robot as much as possible. 
 
-Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within the robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
+Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within the a Baxter robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[scale=0.17]{firstPerson}
+		\caption{The experimental setup from the participant's perspective: a Baxter robot has six objects within reach. The participant stands in front of the table to provide speech and gesture requests}
+	\end{center}
+\end{figure}
 
 We will solve this problem by formulating it as a Partially Observable Markov Decision Process (POMDP)\citep{kaelbling99}, which will allow us to dynamically and flexibly determine how to choose social feedback actions. First, we will describe a two agent model and use this to motivate the construction of a POMDP. The crucial improvement we make over existing robot interaction models is that we maintain a state variable that tracks the human's interpretations of the actions the robot takes. We will next discuss how we solved this POMDP and other measures we took to allow our system to respond dynamically and fluidly. 
 
@@ -127,15 +145,15 @@ Formally, a POMDP is defined as a tuple $\{S, A, T, R, \Omega, O\}$, where :
 
 A typical bayesian network for a POMDP is provided in figure~\ref{fig:pomdp}.\footnote{In this model, we have omitted the dependency between an action and the observation that results from the next state. In the POMDP discussed in this paper, we will not use this dependency for any action. Rather, the affect of the actions on the resulting state variable are encapsulated fully by the resulting transition in the state. }
 
-\tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=4em]
-\tikzstyle{a} = [diamond, draw, fill=gray!40, minimum size=4em]
-\tikzstyle{v} = [circle, draw, fill=white, minimum size=4em]
+\tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=3em]
+\tikzstyle{a} = [diamond, draw, fill=gray!40, minimum size=3em]
+\tikzstyle{v} = [circle, draw, fill=white, minimum size=3em]
 \tikzstyle{line} = [draw, > = stealth, -latex]
 
 
-\begin{figure}
+\begin{figure}[H]
 \begin{center}
-	\begin{tikzpicture}[node distance = 2.5cm, auto]
+	\begin{tikzpicture}[node distance = 1.7cm, auto]
 		%actions
 		\node [v] (ort) {$o_{t}$};
 		\node [a, right of=ort] (oht) {$a_{t}$};
@@ -168,19 +186,19 @@ A typical bayesian network for a POMDP is provided in figure~\ref{fig:pomdp}.\fo
 
 To model this human-robot interactive task, we will use a POMDP. To motivate the construction of our model, consider two-agent model constructed depicted in figure~\ref{fig:twoagent}. 
 
-\tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=4em]
-\tikzstyle{v} = [circle, draw, fill=white, minimum size=4em]
+\tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=3em]
+\tikzstyle{v} = [circle, draw, fill=white, minimum size=3em]
 \tikzstyle{line} = [draw, > = stealth, -latex]
-\begin{figure}[h!]
+\begin{figure}[H]
 \begin{center}
-	\begin{tikzpicture}[node distance = 2.5cm, auto]
+	\begin{tikzpicture}[node distance = 1.5cm, auto]
 		%actions
-		\node [v] (ort) {$o_{H,t}$};
-		\node [v, right of=ort] (oht) {$o_{R, \tau}$};
-		\node [v, right of=oht] (ortp1) {$o_{H,t+1}$}; 
-		\node [v, right of=ortp1] (ohtp1) {$o_{R,\tau+1}$}; 
-		\node [v, left of=ort] (ohtm1) {$o_{R, \tau-1}$};
-		\node [v, left of=ohtm1] (ortm1) {$o_{H, t-1}$};
+		\node [v] (ort) {$o_{t}$};
+		\node [v, right of=ort] (oht) {$\omega_{\tau}$};
+		\node [v, right of=oht] (ortp1) {$o_{t+1}$}; 
+		\node [v, right of=ortp1] (ohtp1) {$\omega_{\tau+1}$}; 
+		\node [v, left of=ort] (ohtm1) {$\omega_{\tau-1}$};
+		\node [v, left of=ohtm1] (ortm1) {$o_{t-1}$};
 		% states
 		\node [h, above of=ort] (st) {$s_t$}; 
 		\node [h, below of=oht] (sigmat) {$\sigma_\tau$};
@@ -212,7 +230,7 @@ To model this human-robot interactive task, we will use a POMDP. To motivate the
 \end{center}
 \end{figure}
 
-We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $o_{R,t}$ and by the human $o_{H,t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $s_t$, which the human observes by means of $o_{R,t}$. The human takes actions $o_{H, \tau - 1}$ to influence the robot's state $s_t$. The upper POMDP is likewise the a POMDP that models the robot's process: the human's state $\sigma_\tau$ is hidden from the robot, and the robot must infer it from observations $o_{H, t}$. When the robot takes action $o_{R, t}$, it affects the human's state $\sigma_\tau$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ as defined above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
+We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $s_t$, which the human observes by means of $o_{R,t}$. The human takes actions $o_{H, \tau - 1}$ to influence the robot's state $s_t$. The upper POMDP is likewise the a POMDP that models the robot's process: the human's state $\sigma_\tau$ is hidden from the robot, and the robot must infer it from observations $o_{H, t}$. When the robot takes action $o_{R, t}$, it affects the human's state $\sigma_\tau$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ as defined above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
 
 
 In the following section we will use this dual structure to inform the construction of our POMDP as applied to our object delivery domain. 
@@ -306,7 +324,10 @@ For each of language and gesture, we will use their own posterior observation fu
 
 
 
-$$p(o|s) = \eta p(l|s) p(g|s) = \eta p(L|s) \left[ \frac{p(l|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(l|\iota^\prime)\beta(\iota^\prime)} \right] ^ L \cdot p(G|s) \left[ \frac{p(g|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(g|\iota^\prime)\beta(\iota^\prime)} \right]^G$$
+\begin{align*}
+	p&(o|s) = \eta p(l|s) p(g|s)  \\
+	&= \eta p(L|s) \left[ \frac{p(l|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(l|\iota^\prime)\beta(\iota^\prime)} \right] ^ L \cdot p(G|s) \left[ \frac{p(g|\iota) \beta(\iota)}{\sum_{\iota^\prime} p(g|\iota^\prime)\beta(\iota^\prime)} \right]^G
+\end{align*}
 
 
 
@@ -316,7 +337,8 @@ $$p(o|s) = \eta p(l|s) p(g|s) = \eta p(L|s) \left[ \frac{p(l|\iota) \beta(\iota)
 We make the assumption that every component of our state transitions conditionally independent of the other components given the previous state. In addition, each state variable depends only on its previous value and the action taken. 
 
 \begin{align*}
-	p(\iota_{t+1}, \beta_{t+1}, \Iota_{t+1} | \iota_t, \beta_t, \Iota_t, a_t)  =  p(\iota_{t+1} | \iota_t, a_t) p(\beta_{t+1} | \beta_t, a) p(\Iota_{t+1} | \Iota_t, a_t)
+	p(\iota_{t+1}&, \beta_{t+1}, \Iota_{t+1} | \iota_t, \beta_t, \Iota_t, a_t) \\
+	&=  p(\iota_{t+1} | \iota_t, a_t) p(\beta_{t+1} | \beta_t, a) p(\Iota_{t+1} | \Iota_t, a_t)
 \end{align*}
 
 \paragraph{Object Transition Function}
@@ -324,43 +346,43 @@ As previously stated, we assume the object the human desires does not change unl
 
 If $a_t$ is \texttt{pick($\iota_t$)}, 
 
-\begin{equation}
-	p(\iota_{t+1} | \iota_t, a_t = \texttt{pick($\iota_t$)}) = \begin{cases}
+\begin{equation*}
+	p(\iota_{t+1} | \iota_t, a_t) = \begin{cases}
 		1/(|\Iota|-1) & \text{if } \iota_{t+1} \in \Iota \text{ and } \iota_{t+1} != \iota \\
 		0 & \text{otherwise} 
 	\end{cases}
-\end{equation}
+\end{equation*}
 
 
 If $a_t$ is any other action: 
 
-\begin{equation}
+\begin{equation*}
 	p(\iota_{t+1} | \iota_t, a_t) = \begin{cases} 
 		1 & \text{if $\iota_{t+1} = \iota_t$} \\
 		0 & \text{otherwise}
 	\end{cases}
-\end{equation}
+\end{equation*}
 
 \paragraph{Object Set Transition Function}
 
 The set of objects $\Iota$ changes only when an object is picked up. The picked object is removed from the set. 
 
 If $a_t$ is a \texttt{pick(i)} action: 
-\begin{equation}
-	p(\Iota_{t+1} | \Iota_t, a_t = \texttt{pick(i)}) = \begin{cases}
+\begin{equation*}
+	p(\Iota_{t+1} | \Iota_t, a_t) = \begin{cases}
 		1 & \text{if $\Iota_{t+1} = |\Iota_t| \setminus \{i\}$} \\ 
 		0 & \text{otherwise}
 	\end{cases}
-\end{equation}
+\end{equation*}
 
 
 If $a_t$ is any other action: 
-\begin{equation}
+\begin{equation*}
 	p(\Iota_{t+1} | \Iota_t, a_t) = \begin{cases}
 		1 & \text{if $\Iota_{t} = \Iota_{t+1}$} \\ 
 		0 & \text{otherwise}
 	\end{cases}
-\end{equation}
+\end{equation*}
 
 \paragraph{Belief Transition Function}
 
@@ -368,14 +390,15 @@ The human's belief about which object the robot will hand over, $\beta_t$, is in
 
 For a particular state $\iota_t$, its probability after $t$ observations is given as follows: 
 
-\begin{equation}
+\begin{equation*}
 	p(\iota_{t+1} | o_{1:t+1}) = p(o_{t+1} | \iota_{t+1}) \sum_{\iota_{t}} p(\iota_{t+1} | \iota_{t}) p (\iota_{t} | o_{1:t})
-\end{equation}
+\end{equation*}
 
 Recall that $\beta$ is a distribution over states (objects) $\iota_t$, so we can use this rule to write an update for each entry of $\beta$. 
 
 \begin{align*}
-	\beta_{t+1}(\iota_{t+1}) = p(\iota_{t+1} | a_{1:t}) &= p(a_{t} | \iota_{t+1}) \sum_{\iota_{t}} p(\iota_{t+1} | \iota_{t}) p (\iota_{t} | a_{1:t-1}) \\ 
+	\beta_{t+1}(\iota_{t+1})&= p(\iota_{t+1} | a_{1:t})  \\
+	&= p(a_{t} | \iota_{t+1}) \sum_{\iota_{t}} p(\iota_{t+1} | \iota_{t}) p (\iota_{t} | a_{1:t-1}) \\ 
 	&= p(a_{t} | \iota_{t+1}) \sum_{\iota_{t}} p(\iota_{t+1} | \iota_{t}) \beta_{t}(\iota_{t}) 
 \end{align*}
 
@@ -440,7 +463,7 @@ In order to create more fluid interactions, we employ a multithreaded solution t
 \tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=8em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{line} = [draw, > = stealth, -latex]
 
-\begin{figure}
+\begin{figure*}
 \begin{center}
 \begin{tikzpicture}[auto]
 	\node [block] (st) {State Tracker}; 
@@ -459,7 +482,7 @@ In order to create more fluid interactions, we employ a multithreaded solution t
 \end{tikzpicture}
 \caption{An overview of multithreaded robot interaction framework. Each node is run on a separate thread. Edges are labeled with the type of data transmitted}
 \end{center}
-\end{figure}
+\end{figure*}
 
 
 
@@ -483,11 +506,11 @@ The toy domain is a simplified version of the full social feedback domain. Objec
 
 We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresults}. We see a sharp reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. In this simple domain, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both domains. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
 
-\begin{figure}[t]
+\begin{figure}[H]
 \begin{center}
-	\includegraphics[width=\textwidth]{toy_results}
+	\includegraphics[width=0.45\textwidth]{toy_results}
 \end{center}
-\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} - number of timesteps until first correct pick, \texttt{turns\_total} - number of timesteps until all objects are picked, \texttt{pick\_acc} - pick accuracy as a percent, \texttt{avg\_time} - average time to compute one action, \texttt{total\_time} - total computation time. In the toy domain, the interaction is over once an object has been picked up, so \texttt{turns\_until\_pick} and \texttt{turns\_total} are equivalent}
+\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} - number of timesteps until first correct pick,  \texttt{pick\_acc} - pick accuracy as a percent}
 	\label{fig:toyresults}
 \end{figure}
 
@@ -496,17 +519,17 @@ We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresu
 
 We run two simulated trials: one without any social feedback actions (only \texttt{pick(i)} and \texttt{wait}), and one with non-social feedback actions and a random subset of six social feedback actions (to reduce computation time). There are four objects on the table for each trial. Each trial uses a different set of randomized actions (to reduce computation costs). Results are presented in figure \ref{fig:results}. 
 
-We see a small, but statistically significant improvement in accuracy at the cost of slightly less than one additional action for the first correct pick.  Because we doubled the number of actions available to the agent, computation time increased exponentially. We likely see less pronounced effects of social feedback in the full domain because of the greater number of observations that are possible, and the relative probability of seeing a useful observation is reduced. This more complicated domain is also more hampered by our reduced horizon of 2, allowing the planner to only consider up to two actions in the future. In the full domain, the agent is much less likely to receive enough observations to correctly pick the object within two timesteps.
+We see a small, but statistically significant improvement in accuracy at the cost of slightly less than one additional action for the first correct pick.  We likely see less pronounced effects of social feedback in the full domain because of the greater number of observations that are possible, and the relative probability of seeing a useful observation is reduced. This more complicated domain is also more hampered by our reduced horizon of 2, allowing the planner to only consider up to two actions in the future. In the full domain, the agent is much less likely to receive enough observations to correctly pick the object within two timesteps, even using social feedback actions. 
 
 To see the more improvement in speed and accuracy, we would likely need to use a larger planning horizon, which is only possible with approximate solvers such as POSS. In addition, increasing the number of objects, i.e., the complexity of the task, would likely result in a sharper difference between the number of turns required to give the human the correct object, as the robot is unlikely to receive a useful observation unless it can specify to the human which observation it requires. 
 
 
 
-\begin{figure}[t]
+\begin{figure}[H]
 \begin{center}
-	\includegraphics[width=\textwidth]{full_results}
+	\includegraphics[width=0.45\textwidth]{full_results}
 \end{center}
-\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} - number of timesteps until first correct pick, \texttt{turns\_total} - number of timesteps until all objects are picked, \texttt{pick\_acc} - pick accuracy as a percent, \texttt{avg\_time} - average time to compute one action, \texttt{total\_time} - total computation time}
+\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} - number of timesteps until first correct pick,  \texttt{pick\_acc} - pick accuracy as a percent}
 	\label{fig:results}
 \end{figure}
 
@@ -533,6 +556,7 @@ This thesis is the result of work that has been ongoing since December 2014. I w
 
 This project is part of an ongoing initiative towards social robotics by Brown University's H2R laboratory under Professor Stefanie Tellex. 
 
+\end{multicols}
 \section{Appendix}
 
 \subsection{Posterior Observation Function: Toy Example}
