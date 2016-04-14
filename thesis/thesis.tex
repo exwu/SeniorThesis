@@ -447,9 +447,9 @@ If we assume that $\beta_0$ begins as the uniform distribution over objects, we 
 
 \subsection{Policy Generation}
 
-It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP at speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. In this paper, we use the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to pick the correct objects. 
+It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP at speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. In this paper, we use the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to select the correct objects. 
 
-We implement this model within the Brown UMBC Reinforcement Learning And Planning~/citep{burlap} framework, which allows for many standard AI and Reinforcement learning algorithms to be used with our domain. 
+We implement this model within the Brown UMBC Reinforcement Learning And Planning~\citep{burlap} framework, which allows for many standard AI and Reinforcement learning algorithms to be used with our domain. 
 
 
 \subsection{Incremental System Design}
