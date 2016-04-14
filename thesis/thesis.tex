@@ -417,27 +417,22 @@ We can rewrite our element-wise update for the whole $\beta$ vector using a matr
 $$\beta_{t+1} = A_{t}T \beta_{t}$$
 
 
-where $A_{t}$ is a matrix representing the reverse observation function $p(a_{t} | \iota_t)$ and $T$ is a matrix representing the transition function $p(\iota_{t+1}|\iota_{t})$.  If the set of items $\mathcal{\iota} = \{ \iota_1, \iota_2, \ldots, \iota_n\}$, 
+where $A_{t}$ is a matrix representing the reverse observation function $p(a_{t} | \iota_{t+1})$ and $T$ is a matrix representing the transition function $p(\iota_{t+1}|\iota_{t})$.  If the set of items $\mathcal{\iota} = \{ \iota_1, \iota_2, \ldots, \iota_n\}$, A is a diagonal such that
 
-\begin{equation}
-	A_{t} = \left[\begin{matrix} 
-		p(a_{t} | \iota_1) & 0 & \ldots & 0 \\
-		0 & p(a_{t} | \iota_2) & \ldots & 0 \\
-		\vdots & \vdots & \ddots & \ldots  \\
-		0 & 0 & \ldots  &  p(a_{t} | \iota_n) \\
-	\end{matrix}
-\right]
-\end{equation}
+\begin{equation*}
+	a_{ij} = \begin{cases}
+		0 & \text{if } i \ne j \\
+		p(a_t | \iota_{t+1} = \iota_i & \text{otherwise}
+	\end{cases}
+\end{equation*}
+
+and T is a matrix with entries
+
+\begin{equation*}
+	t_{ij} = p(\iota_{t+1} = \iota_i | \iota_{t} = \iota_j)
+\end{equation*}
 		
-\begin{equation}
-	T = \left[\begin{matrix} 
-			p(\iota_1 | \iota_1) & p(\iota_1| \iota_2)  & \ldots & p(\iota_1 | \iota_n) \\
-			p(\iota_2 | \iota_1) & p(\iota_2 | \iota_2) & \ldots & p(\iota_2 | \iota_n) \\
-			\vdots & \vdots & \ddots & \ldots  \\
-			p(\iota_n | \iota_1) & p(\iota_n | \iota_2) & \ldots  &  p(\iota_n | \iota_n) \\
-	\end{matrix}
-\right]
-\end{equation}
+
 
 This gives us a deterministic transition function for $\beta$: 
 
@@ -452,7 +447,7 @@ If we assume that $\beta_0$ begins as the uniform distribution over objects, we 
 
 \subsection{Policy Generation}
 
-It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP add speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. In this paper, we use the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to pick the correct objects. 
+It is possible to calculate an optimal policy to solve our POMDP, however, due its size, doing so is intractable. Moreover, we would like to solve our POMDP at speeds suitable for interaction. Fortunately, approximate solutions exist which allow us to trade off accuracy for computational time. In this paper, we use the Partially Observable Sparse Sampling (POSS) algorithm \citep{Gopalan2016}, which uses Monte-Carlo Tree Search~\citep{coulom2006efficient} and Upper Confidence Bound exploration~\citep{kocsis2006bandit} to derive a policy for our POMDP. In order to improve the accuracy of the planner, we also provide a heuristic for the random rollouts that prevents the rollouts from selecting pick actions that are unlikely to pick the correct objects. 
 
 We implement this model within the Brown UMBC Reinforcement Learning And Planning~/citep{burlap} framework, which allows for many standard AI and Reinforcement learning algorithms to be used with our domain. 
 
