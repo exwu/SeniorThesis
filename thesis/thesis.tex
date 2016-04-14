@@ -46,7 +46,7 @@
 
 \vspace*{\fill}
 \section*{Abstract}
-Robotic collaboration requires not just communication from the human to the robot, but also from the robot to the human. We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we describe a Partially Observable Markov Decision Process that incorporates the human's belief about the robot's intent. We then engineer a system that can respond in near-real time that is supplemented with a multithreaded interaction model that allows for more responsive human-robot interactions. Initial evaluation in simulation shows that our social feedback model some improvement in pick accuracy at the cost of additional interaction time.
+Robotic collaboration requires not just communication from the human to the robot, but also from the robot to the human. We call this robot-to-human communication \emph{social feedback}. In order to flexibly and intelligently generate social feedback, we describe a Partially Observable Markov Decision Process that incorporates the human's belief about the robot's intent. We then engineer a system that can respond in near-real time that is supplemented with a multithreaded interaction model that allows for more responsive human-robot interactions. Initial evaluation in simulation shows improvement in interaction length in a toy domain and improvement in accuracy in the full domain.
 \vspace*{\fill}
 \newpage
 \tableofcontents
@@ -64,7 +64,7 @@ Feedback refers to the responses that are received by an agent when it takes som
 
 Many existing works focus on the task of interpreting human communications\citep{tellex11,matuszek12,tellex12,misra14}, but provide no response if the interpretation fails. As a consequence, it becomes difficult to tell whether the robot is still making progress in interpreting the request, or has failed. Some works do allow for robotic responses to ambiguous situations, but the manner of their responses are hard coded, often limited to generic requests, such as ``please repeat the question''. In this work, we provide a means to generate these requests in the form of language and gesture that can flexibly represent the robot's state as well as inform the human in such a way so that allows the human to help the robot as much as possible. 
 
-Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within the a Baxter robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
+Specifically, we address the object delivery task. In this task, a set of objects are laid out on a table within a Baxter robot's reach. A human participant requests an object from the robot using speech and gesture (pointing). The robot must interpret the human's speech and gesture and deliver the requested object to the human. The task then repeats with the remaining objects on the table. This task is achievable without social feedback; the robot need only wait until enough information is given and then deliver the correct object. However, we will show that by adding social feedback actions, such as asking questions, looking at objects, and pointing at objects, we will achieve better accuracy and speed as well as improved user experience. 
 
 \begin{figure}[H]
 	\begin{center}
@@ -80,7 +80,7 @@ As an initial evaluation, we run our model in simulation to showcase improved sp
 
 \section{Related Work}
 
-This work is primarily built off of \cite{eldon15thesis}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In \cite{socialfeedback}, \cite{eldon15thesis} is expanded into a POMDP model and allowed to ask yes-no actions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
+This work is primarily built off of \cite{eldon15thesis}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work \citep{socialfeedback}, the model from \cite{eldon15thesis} is expanded into a POMDP model and allowed to ask yes-no actions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
 
 Work demonstrating the importance of social feedback in human-human
 communication has been done in the field of psycholinguistics. In  \cite{clark04}, one human (labeled the builder)
@@ -126,7 +126,7 @@ Partially Observable Markov Decision Processes (POMDPs) are used to model Markov
 
 \paragraph{State Estimator}
 
-The state estimator is given an initial belief and uses Bayesian mathematics to update its belief over time. In order to perform this update, the state estimator has a model of how the hidden states emit observations as well as how the state evolves in response to actions performed by the robot. The first model is described by the observation function and the second by the transition function. 
+The state estimator is given an initial belief and uses Bayesian mathematics to update its belief over time. In order to perform this update, the state estimator has a model of how the hidden states emit observations, called the observation function, as well as how the state evolves in response to actions performed by the robot, called the transition function. 
 
 \paragraph{Policy Generator}
 
@@ -137,13 +137,13 @@ Formally, a POMDP is defined as a tuple $\{S, A, T, R, \Omega, O\}$, where :
 \begin{itemize}
 	\item $s \in S$ is a hidden state. 
 	\item $a \in A$ is an action that an agent takes. 
-	\item $T: S \times A \times S \to [0, 1]$ is a transition function that returns returns the value $p(s^\prime | s, a)$, the probability of transitioning to state $s^\prime \in  S$ from state $s \in S$ when taking action $a \in A$. 
+	\item $T: S \times A \times S \to [0, 1]$ is a transition function that returns the value $p(s^\prime | s, a)$, the probability of transitioning to state $s^\prime \in  S$ from state $s \in S$ when taking action $a \in A$. 
 	\item $R: S \times A \to \mathbb{R}$ is a reward function that returns the reward for taking action $a \in A$ in state $s \in S$. 
 	\item $o \in \Omega$ is an observation. 
 	\item $O: S \times A \times O \to [0, 1]$ is an observation function that returns the value of $p(o | s, a)$, the probability of observing observation $o \in O$ when action $a \in A$ transitions into $s \in S$. 
 \end{itemize}
 
-A typical bayesian network for a POMDP is provided in figure~\ref{fig:pomdp}.\footnote{In this model, we have omitted the dependency between an action and the observation that results from the next state. In the POMDP discussed in this paper, we will not use this dependency for any action. Rather, the affect of the actions on the resulting state variable are encapsulated fully by the resulting transition in the state. }
+A typical bayesian network for a POMDP is provided in figure~\ref{fig:pomdp}.\footnote{In this model, we have omitted the dependency between an action and the observation from the next timestep. In the POMDP discussed in this paper, we will not use this dependency for any action. Rather, the affect of the actions on the observation is encapsulated in the state.}
 
 \tikzstyle{h} = [circle, draw, fill=gray!40, minimum size=3em]
 \tikzstyle{a} = [diamond, draw, fill=gray!40, minimum size=3em]
@@ -230,7 +230,7 @@ To model this human-robot interactive task, we will use a POMDP. To motivate the
 \end{center}
 \end{figure}
 
-We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $s_t$, which the human observes by means of $o_{R,t}$. The human takes actions $o_{H, \tau - 1}$ to influence the robot's state $s_t$. The upper POMDP is likewise the a POMDP that models the robot's process: the human's state $\sigma_\tau$ is hidden from the robot, and the robot must infer it from observations $o_{H, t}$. When the robot takes action $o_{R, t}$, it affects the human's state $\sigma_\tau$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ as defined above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
+We represent human states $s_t$, robot states $\sigma_\tau$, and observations generated by the robot $\omega_\tau$ and by the human $o_{t}$. Observe that the structure of this model resembles two POMDPs combined together at their actions and observations. The lower POMDP is the POMDP from the human's perspective: the robot has some hidden states $\sigma_\tau$, which the human observes by means of $\omega_{t}$. The human takes actions $o_{\tau - 1}$ to influence the robot's state $\sigma_t$. The upper POMDP models the interaction from the robot's perspective: the human's state $s_t$ is hidden from the robot, and the robot must infer it from observations $o_{t}$. When the robot takes action $\omega_{t}$, it affects the human's state $s_t$. Crucially, each agent treats the other agent's action as an observation that influences their belief about the other agent's hidden state. Thus, the human's actions affect the robot's belief about the human's state, which is what we call $b$ above. Importantly, the reverse is also true: the robot's actions affect the human's belief about what the robot's hidden state is. We will call the human's belief over the robot's hidden state $\beta$. 
 
 
 In the following section we will use this dual structure to inform the construction of our POMDP as applied to our object delivery domain. 
