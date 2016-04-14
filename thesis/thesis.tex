@@ -454,13 +454,6 @@ We implement this model within the Brown UMBC Reinforcement Learning And Plannin
 
 \subsection{Incremental System Design}
 
-Interactive systems that involve speech often make an assumption that the interaction can be split neatly into turns: first one speaker provides a complete utterance, and then the other. This is often not the case, and it is a subtle matter to determine when one turn is completed and the other agent can begin to speak. As a consequence, many systems involving dialogue, including earlier iterations of this project, do not ``hear'' utterances or gestures while the agent is speaking or acting. Any speech or gestures the human made while the robot was executing its action were dropped and never incorporated into the robot's belief about the state. An additional problem was that while the robot was planning its next action, it would also not incorporate any observations made. This was a significant affect, as it could take up to 10 seconds of planning for the robot to make its next move. As a consequence, most observations would be dropped unless we incorporated a system of turn-taking where we waiting a set amount of time for the human to provide any speech and gesture input. 
-
-While turn-taking is an adequate solution for dialogue-only systems, full fledged interaction is more continuous. Even when speaking in a turn-like manner, agents give signals back and forward to signal their understanding and also provide corrections and interruptions.
-
-In order to create more fluid interactions, we employ a multithreaded solution that separates the state estimation, planning, and executions of actions. This allows our robot to simultaneously track the human's belief, plan its next move, and interact with the human. 
-
-
 \tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=8em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{line} = [draw, > = stealth, -latex]
 
@@ -482,15 +475,23 @@ In order to create more fluid interactions, we employ a multithreaded solution t
 	\path [line] (n) -- node[above]{observations} (st);
 \end{tikzpicture}
 \caption{An overview of multithreaded robot interaction framework. Each node is run on a separate thread. Edges are labeled with the type of data transmitted}
+\label{fig:system}. 
 \end{center}
 \end{figure*}
 
+Interactive systems that involve speech often make an assumption that the interaction can be split neatly into turns: first one speaker provides a complete utterance, and then the other. This is often not the case, and it is a subtle matter to determine when one turn is completed and the other agent can begin to speak. As a consequence, many systems involving dialogue, including earlier iterations of this project, do not ``hear'' utterances or gestures while the agent is speaking or acting. Any speech or gestures the human made while the robot was executing its action were dropped and never incorporated into the robot's belief about the state. An additional problem was that while the robot was planning its next action, it would also not incorporate any observations made. This was a significant effect, as it could take up to 10 seconds of planning for the robot to make its next move. As a consequence, most observations would be dropped unless we incorporated a system of turn-taking where we waited a set amount of time for the human to provide any speech and gesture input. 
+
+While turn-taking is an adequate solution for dialogue-only systems, full fledged interaction is more continuous. Even when speaking in a turn-like manner, agents give signals back and forward to signal their understanding and also provide corrections and interruptions.
+
+In order to create more fluid interactions, we employ a multithreaded solution that separates the state estimation, planning, and executions of actions. This allows our robot to simultaneously track the human's belief, plan its next move, and interact with the human. A diagram of the system is available in figure~\ref{fig:system}
 
 
 
-\paragraph{State Tracker} The state tracker incorporates observations from the human at a very high rate, allowing the tracker to always have access to the most up-to-date state estimation. However, our domain description requires the robot to choose an action between each consecutive observation. We address this by feeding the model a \texttt{wait} action unless the planning thread has provided a action that has not yet been integrated, in which case we use that action. This also requires minimal dependency between actions and observations, which our model avoids. 
 
-\paragraph{Asynchronous Planner} A separate thread runs the planning code. Planning can take several seconds, during which the robot is not only idle, but also deaf and blind. Running the planning code on a separate thread allows the robot to continuing observing and interacting with the human while the robot plans its next move. In addition, we can use several planning threads at once, with separate policies to control the robot's face, arms, head angle, etc. In our work, we use one thread to plan for the POMDP domain described above, and another to animate the Baxter's face to show an facial expression of increasing confusion with the entropy of the belief state. 
+
+\paragraph{State Tracker} The state tracker incorporates observations from the human at a very high rate, allowing the tracker to always have access to the most up to date state estimation. However, our domain description requires the robot to choose an action between each consecutive observation. We address this by feeding the model a \texttt{wait} action unless the planning thread has provided a different action. This requires minimal dependency between actions and observations, which our model avoids. 
+
+\paragraph{Asynchronous Planner} A separate thread runs the planning code. Planning can take several seconds, during which the robot is not only idle, but also deaf and blind. Running the planning code on a separate thread allows the robot to continue observing and interacting with the human while the robot plans its next move. In addition, we can use several planning threads at once, with separate policies to control the robot's face, arms, head angle, etc. In our work, we use one thread to plan for the POMDP domain described above, and another to animate the Baxter's face to show and facial expression of increasing confusion with the entropy of the belief state. 
 
 \paragraph{Action Queue} The planning threads push their actions onto a queue which executes them one by one, allowing the planning threads to resume planning if the actions they produce take some time to execute. An additional advantage is that this allows the robot to be constantly acting, with minimal idle time. 
 
@@ -503,15 +504,15 @@ Due to difficulties with the POSS algorithm, we return to Belief Sparse Sampling
 To evaluate the performance of our model, we run simulated trials with two different domains: first with a toy domain, and second with the full social feedback domain. 
 \subsubsection{Toy Domain Results}
 
-The toy domain is a simplified version of the full social feedback domain. Objects are represented by binary string bits of length 3, and observations take the form of observing that some bit has some value. There is no noise in observations. The agent can take \texttt{wait} and \texttt{null} observations in the non-social trials, and in the social trials, can take non-social actions as well as actions of the form \texttt{inform(x, y)}, which represents informing the human that the robot believes that the $x$th digit has value $y$. 
+The toy domain is a simplified version of the full social feedback domain. Objects are represented by binary string bits of length 3, and observations tell the robot that a particular bit has some value. There is no noise in observations. The agent can take \texttt{wait} and \texttt{pick} actions in the non-social trials, and in the social trials, can take non-social actions as well as actions of the form \texttt{inform(x, y)}, which represents informing the human that the robot believes that the $x$th digit has value $y$. 
 
-We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresults}. We see a sharp reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. In this simple domain, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both domains. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
+We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresults}. We see a sharp reduction in the number of actions needed until the robot can successfully pick the correct object, while accuracy remains the same. In this simple domain, it is easy to identify the correct object with enough observations, accounting for the high accuracy in both domains. However, taking social feedback actions allows the agent to request the observations that it needs from the human to complete the interaction as quickly as possible. Notice also that the variance in the number of actions the robot takes until the first correct pick is very small in the social trials, while it is very large in the non-social trials. Social feedback actions allow the agent to control the interaction so that it is as brief as possible. 
 
 \begin{figure}[H]
 \begin{center}
 	\includegraphics[width=0.45\textwidth]{toy_results}
 \end{center}
-\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} - number of timesteps until first correct pick,  \texttt{pick\_acc} - pick accuracy as a percent}
+\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the pick accuracy as a percent}
 	\label{fig:toyresults}
 \end{figure}
 
@@ -520,9 +521,9 @@ We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresu
 
 We run two simulated trials: one without any social feedback actions (only \texttt{pick(i)} and \texttt{wait}), and one with non-social feedback actions and a random subset of six social feedback actions (to reduce computation time). There are four objects on the table for each trial. Each trial uses a different set of randomized actions (to reduce computation costs). Results are presented in figure \ref{fig:results}. 
 
-We see a small, but statistically significant improvement in accuracy at the cost of slightly less than one additional action for the first correct pick.  We likely see less pronounced effects of social feedback in the full domain because of the greater number of observations that are possible, and the relative probability of seeing a useful observation is reduced. This more complicated domain is also more hampered by our reduced horizon of 2, allowing the planner to only consider up to two actions in the future. In the full domain, the agent is much less likely to receive enough observations to correctly pick the object within two timesteps, even using social feedback actions. 
+We see a small, but statistically significant improvement in accuracy at the cost of slightly less than one additional action for the first correct pick. The less pronounced effects of social feedback are likely due to the greater number of observations that are possible, and the relative probability of seeing a useful observation is reduced. This more complicated domain is also hampered by our reduced horizon of 2, allowing the planner to only consider up to two actions in the future. In the full domain, the agent is much less likely to receive enough observations to correctly pick the object within two timesteps, even using social feedback actions. 
 
-To see the more improvement in speed and accuracy, we would likely need to use a larger planning horizon, which is only possible with approximate solvers such as POSS. In addition, increasing the number of objects, i.e., the complexity of the task, would likely result in a sharper difference between the number of turns required to give the human the correct object, as the robot is unlikely to receive a useful observation unless it can specify to the human which observation it requires. 
+To see more improvement in speed and accuracy, we would likely need to use a larger planning horizon, which is only possible with approximate solvers such as POSS. In addition, increasing the number of objects, i.e., the complexity of the task, would likely result in a sharper difference between the number of turns required to give the human the correct object. The robot is unlikely to receive a useful observation unless it can signal to the human which observation it requires. 
 
 
 
@@ -530,22 +531,22 @@ To see the more improvement in speed and accuracy, we would likely need to use a
 \begin{center}
 	\includegraphics[width=0.45\textwidth]{full_results}
 \end{center}
-\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} - number of timesteps until first correct pick,  \texttt{pick\_acc} - pick accuracy as a percent}
+\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the pick accuracy as a percent}
 	\label{fig:results}
 \end{figure}
 
 \subsection{User Studies Procedure}
 
-Users are acquired from convenience sampling by inviting volunteers from the Brown University CIT building. For each user, two trials are run: a baseline trial without any social feedback actions, and a social-feedback trial with social feedback actions enabled. For each trial, the user is given a microphone and invited to use speech and gesture to ask the robot for a specific item on the table, and to not change that object until it was picked up. After their requested object is picked up, they should request a new object and repeat the procedure until the robot had handed them all objects on the table. Whether the social or non-social trial was performed first was decided randomly for each user. Between the two trials, they are given a survey to assess the qualitative aspects of the interaction, including metrics such as the robot's perceived intelligence, friendliness, etc. 
+Users are acquired from convenience sampling by inviting volunteers from the Brown University CIT building. For each user, two trials are run: a baseline trial without any social feedback actions, and a social-feedback trial with social feedback actions enabled. For each trial, the user is given a microphone and invited to use speech and gesture to ask the robot for a specific item on the table, and to not change that object until it was picked up. After their requested object is picked up, they request a new object and repeat the procedure until the robot has handed them all objects on the table. It is decided randomly whether the social or non-social trial is performed first for each user. Between the two trials, they are given a survey to assess the qualitative aspects of the interaction, including metrics such as the robot's perceived intelligence, friendliness, etc. 
 
-This procedure is based off a previous user study run for an earlier iteration of this project. In this user study, we noticed a small affect showing the increased speed of interaction with social feedback actions enabled. However, this study was run with only six participants, so these affects were likely not statistically significant. When user studies are run in the future, we will have a larger sample size, but also increase the difficulty of the task by adding more objects, which should further highlight the necessity of social feedback. 
+This procedure is based off a previous user study run for an earlier iteration of this project. In this user study, we noticed a small effect showing the increased speed of interaction with social feedback actions enabled. However, this study was run with only six participants, so these effects were likely not statistically significant. When user studies are run in the future, we will have a larger sample size, but also increase the difficulty of the task by adding more objects, which should further highlight the necessity of social feedback. 
 
 
 \section{Future Work}
 
-The next order of work will be to run user-studies with human participants to compare to efficacy of this system compared to the system without social feedback. This will require the exploration of approximate solvers to allow us to solve the POMDP in real time, or to precompute policies. 
+The next task will be to run user-studies with human participants to compare the performance of the system with and without social feedback. This will require the exploration of approximate solvers to allow us to solve the POMDP in real time, or to precompute policies. 
 
-Other areas for further exploration can be found by removing many of the assumptions made in this paper. For example, the set of objects on the table was assumed to be known. Attempting to learn from the human more about the set of objects, such as their vocabularies and location, would be an interesting expansion. 
+Other areas for further exploration can be found by removing many of the assumptions made in this thesis. For example, the set of objects on the table was assumed to be known. Attempting to learn from the human more about the set of objects, such as their vocabularies and location, would be an interesting expansion. 
 
 Use of the $\beta$ variable can be expanded to include uncertainty over the value of $\beta_t$, allowing for ambiguity in how the human interprets the robot's action. In the same vein, additional modes of interaction from both the robot and human can be explored. 
 
@@ -563,7 +564,7 @@ This project is part of an ongoing initiative towards social robotics by Brown U
 \section{Appendix}
 
 \subsection{Posterior Observation Function: Toy Example}
-In order to demonstrate and motivate the posterior observation function, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. In our toy domain, for the base leve observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
+In order to demonstrate and motivate the posterior observation function, we will define a toy domain. In this toy domain, the states are the following: $\{AA, AB, BA, BB\}$ as well as $\beta$, which is a distribution over these states. The observations are $\{A\_, \_A, B\_, \_B\}$, which mean ``the first character is an A'', ``the second character is an A'', ``the first character is B'', ``and the second character is a B'' respectively. These observations are provided by the human. The agent can take actions $CX$ which is informing the human that the agent believes the Xth character is a C, as well as ``picking'' the object or waiting. For the basel level observation, the human always gives truthful observations, and has equal probability of generating an observation pertaining to a particular character. We will see how this affects the POMDP observation function, which incorporates $\beta$. 
 
 Consider the following situation: 
 
@@ -673,7 +674,7 @@ For $\texttt{point(x)}$ actions, we define an angle $\phi_p$ to be the angle bet
 
 $$p(a_{t} = \texttt{point(x)} | \iota_{t+1}) = \mathcal{N}(\phi_p | 0, v_{p})$$
 
-Actions $\texttt{say(p)}$ take the form of a statement ``I believe that the object you want is $p$'', where $p$ is some property from the some object's vocabulary. The probability of this action given some $\iota$ is identical to the speech model for the human, given in section~\ref{baseobs}. 
+Actions $\texttt{say(p)}$ take the form of a statement ``I believe that the object you want is $p$'', where $p$ is some property from some object's vocabulary. The probability of this action given some $\iota$ is identical to the speech model for the human, given in section~\ref{baseobs}. 
 
 \newpage
 
