@@ -80,7 +80,7 @@ As an initial evaluation, we run our model in simulation to showcase improved sp
 
 \section{Related Work}
 
-This work is primarily built off of \cite{eldon15thesis}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work \citep{socialfeedback}, the model from \cite{eldon15thesis} is expanded into a POMDP model and allowed to ask yes-no actions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
+This work is primarily built off of \cite{eldon15thesis}, which describes a system for incremental speech and gesture recognition in an object-delivery domain. In previous work \citep{socialfeedback}, the model from \cite{eldon15thesis} is expanded from a bayesian inference model into a POMDP model that can ask yes-no questions. In this work, we generalize the idea of the affect of robot's actions on humans state within a POMDP framework. 
 
 Work demonstrating the importance of social feedback in human-human
 communication has been done in the field of psycholinguistics. In  \cite{clark04}, one human (labeled the builder)
@@ -512,7 +512,7 @@ We run 25 trials in simulation. Results are presented in figure \ref{fig:toyresu
 \begin{center}
 	\includegraphics[width=0.45\textwidth]{toy_results}
 \end{center}
-\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the pick accuracy as a percent}
+\caption{Results in simulation for the toy domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks}
 	\label{fig:toyresults}
 \end{figure}
 
@@ -531,7 +531,7 @@ To see more improvement in speed and accuracy, we would likely need to use a lar
 \begin{center}
 	\includegraphics[width=0.45\textwidth]{full_results}
 \end{center}
-\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the pick accuracy as a percent}
+\caption{Results in simulation for the full domain. \texttt{turns\_until\_pick} is the number of timesteps until first correct pick,  \texttt{pick\_acc} is the ratio of correct picks to total picks}
 	\label{fig:results}
 \end{figure}
 
@@ -541,16 +541,23 @@ Users are acquired from convenience sampling by inviting volunteers from the Bro
 
 This procedure is based off a previous user study run for an earlier iteration of this project. In this user study, we noticed a small effect showing the increased speed of interaction with social feedback actions enabled. However, this study was run with only six participants, so these effects were likely not statistically significant. When user studies are run in the future, we will have a larger sample size, but also increase the difficulty of the task by adding more objects, which should further highlight the necessity of social feedback. 
 
+Interesting metrics to measure include are how the perception of the robot is correlated to the actions the robot takes, as well as the accuracy and speed of the interaction. We may also consider a longer-running user study to investigate how people learn how to interact with the robot. 
+
+
 
 \section{Future Work}
 
 The next task will be to run user-studies with human participants to compare the performance of the system with and without social feedback. This will require the exploration of approximate solvers to allow us to solve the POMDP in real time, or to precompute policies. 
+
+We would also like to expand the domain by allowing for more modalities of user input, such as other types of gestures as well as more subtle cues such as expression or emotion. In the same vein, more exploration can be done in the area of robot expression, investigating more types of social feedback action and formalizing how they affect human belief. 
 
 Other areas for further exploration can be found by removing many of the assumptions made in this thesis. For example, the set of objects on the table was assumed to be known. Attempting to learn from the human more about the set of objects, such as their vocabularies and location, would be an interesting expansion. 
 
 Use of the $\beta$ variable can be expanded to include uncertainty over the value of $\beta_t$, allowing for ambiguity in how the human interprets the robot's action. In the same vein, additional modes of interaction from both the robot and human can be explored. 
 
 The object delivery domain can also be abstracted to a domain where the goal is not to determine which object the human wants, but the human's intent in general. This system of tracking the human's belief about the robot's communicated intent can be widely applied to other human-robot interaction tasks. 
+
+
 
 \section{Acknowledgements}
 
