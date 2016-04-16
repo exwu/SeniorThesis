@@ -1,5 +1,4 @@
-\documentclass{article}
-\usepackage{tikz}
+\documentclass{article} \usepackage{tikz}
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{calc,positioning,shapes,arrows}
 \newcommand{\Iota}{\mathcal{I}}
@@ -17,9 +16,9 @@
 \node [a, left of=ort] (ohtm1) {$a_{t-1}$};
 \node [v, left of=ohtm1] (ortm1) {$o_{t-1}$};
 % states
-\node [h, above of=ort] (st) {$s_t$}; 
-\node [h, above of=ortm1] (stm1) {$s_{t-1}$}; 
-\node [h, above of=ortp1] (stp1) {$s_{t+1}$}; 
+\node [h, above of=ort] (st) {$\iota_t, \Iota_t, \beta_t$}; 
+\node [h, above of=ortm1] (stm1) {$\iota_{t-1}, \Iota_{t-1}, \beta_{t-1}$}; 
+\node [h, above of=ortp1] (stp1) {$\iota_{t+1}, \Iota_{t+1}, \beta_{t+1}$}; 
 % edges; state -> obs
 \path [line] (st) edge (ort); 
 \path [line] (stm1) edge (ortm1); 
